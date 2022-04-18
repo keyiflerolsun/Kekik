@@ -31,3 +31,16 @@ def satirlar_ekle(dosya_adi:str, eklenecek_metinler:list):
                 satir_atla = True
 
             dosya.write(satir)              # Dosyanın sonuna eleman ekle
+
+def satir_sil(dosya:str, metin:str) -> None:
+    """İlgili Metnin Geçtiği Satırı İstenen Dosyanın İçerisinden Siler"""
+
+    # Dosyayı yeniden yazılabilir modunda açın ('r+')
+    with open(dosya, "r+", encoding="utf-8") as dosya:
+        satirlar = dosya.readlines()            # Satırları liste olarak alın
+        dosya.seek(0)                           # Okuma imlecini dosyanın başına taşıyın
+        for satir in satirlar:                  # Satırları gezin
+            if metin not in satir and \
+                satir !='\n':                   # Eğer metin satır içinde geçmiyorsa ve \n Değilse
+                dosya.write(satir)              # Dosyaya ekleyin
+        dosya.truncate()                        # Var olan dosyadakiş tüm verileri silin

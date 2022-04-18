@@ -106,6 +106,7 @@ print(csv2dict('Config/ALICILAR.csv'))
 ### **[hwid_kontrol](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/hwid_kontrol.py)**
 ### **[satir_ekle](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/txt_fetis.py)**
 ### **[satirlar_ekle](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/txt_fetis.py)**
+### **[satir_sil](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/txt_fetis.py)**
 ### **[list2html](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/list2html.py)**
 ### **[mail_gonder](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/mail_gonder.py)**
 
