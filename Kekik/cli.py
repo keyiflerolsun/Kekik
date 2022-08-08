@@ -6,8 +6,8 @@ konsol = Console(log_path=False, highlight=False)
 
 #---------------------------------------------------#
 from os        import system as cli
+from platform  import node   as pc_adi
 from platform  import system as platform
-from platform  import node
 
 try:
     from os import getlogin
@@ -17,7 +17,7 @@ except OSError:
     from os  import geteuid
     kullanici_adi = getpwuid(geteuid())[0]
 
-oturum = f"{kullanici_adi}@{node()}"
+oturum = f"{kullanici_adi}@{pc_adi()}"
 
 def temizle():
     if platform() == "Windows":
@@ -25,10 +25,9 @@ def temizle():
     else:
         cli("clear")
 
-from os       import getcwd
-from platform import system
+from os import getcwd
 
-konum   = getcwd().split("\\") if system() == "Windows" else getcwd().split("/")
+konum   = getcwd().split("\\") if platform() == "Windows" else getcwd().split("/")
 secenek = lambda : konsol.input(f'[red]{oturum}:[/][cyan]~/../{konum[-2]}/{konum[-1]} >> ')
 
 #---------------------------------------------------#
