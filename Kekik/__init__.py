@@ -16,4 +16,5 @@ from Kekik.dict2csv        import dict2csv
 from Kekik.mail_gonder     import mail_gonder
 from Kekik.dosya2set       import dosya2set
 from Kekik.proxy_ver       import proxy_ver
+from Kekik.kisi_ver        import kisi_ver
 ####

@@ -139,6 +139,19 @@ print(proxy_ver("proxiler.txt", "selenium"))
 # 127.0.0.1:3310:keyiflerolsun:KekikAkademi
 ```
 
+### **[kisi_ver](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/kisi_ver.py)**
+```python
+from Kekik import kisi_ver
+
+print(kisi_ver("tr"))
+
+# {'isim': 'Selami', 'soyisim': 'Tokatlioğlu', 'kullanici_adi': 'Sela27Toka', 'biyografi': 'En bilge adamlar kendi yönlerini takip ederler.', 'profil_resmi': 'tmp/Sela27Toka.jpg'}
+
+print(kisi_ver("en"))
+
+# {'isim': 'Laurel', 'soyisim': 'Blake', 'kullanici_adi': 'Laur42Blak', 'biyografi': 'From little acorns mighty oaks do grow.', 'profil_resmi': 'tmp/Laur42Blak.jpg'}
+```
+
 ### **[dict2json](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dict2json.py)**
 ### **[dosya_indir](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya_indir.py)**
 ### **[benim_hwid](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/hwid_kontrol.py)**
