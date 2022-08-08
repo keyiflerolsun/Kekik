@@ -1,8 +1,8 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from qrcode import QRCode
-from io import StringIO
-from qrcode.image.styledpil import StyledPilImage
+from qrcode                            import QRCode
+from io                                import StringIO
+from qrcode.image.styledpil            import StyledPilImage
 from qrcode.image.styles.moduledrawers import VerticalBarsDrawer
 
 def qr_ver(veri, png:bool=False, favicon:str=None, txt:bool=False) -> str:

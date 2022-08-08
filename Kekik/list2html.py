@@ -1,9 +1,9 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 from tabulate import tabulate
-from typing import List, Dict
+from typing   import List, Dict
 
-def list2html(title:str, tablo_veri:List[Dict], header:str='', aciklama:str='', footer:str='', pdf_sayfa:str="A4") -> str:
+def list2html(title:str, tablo_veri:List[Dict], header:str='', aciklama:str='', footer:str='', pdf_sayfa:str="A4", sayfalama:bool=True) -> str:
     tablo_html = tabulate(tablo_veri, headers='keys', tablefmt='html')
 
     css = """<style>
@@ -59,7 +59,7 @@ def list2html(title:str, tablo_veri:List[Dict], header:str='', aciklama:str='', 
                 $(":button").removeClass("dt-button");
                 $(":button").addClass("btn btn-secondary")
             });
-        </script>""".replace("pageSize:'A4'", f"pageSize:'{pdf_sayfa}'")
+        </script>""".replace("pageSize:'A4'", f"pageSize:'{pdf_sayfa}'").replace("paging: false", f"paging: {str(sayfalama).lower()}")
 
     return f"""<!doctype html>
 <html lang="tr">

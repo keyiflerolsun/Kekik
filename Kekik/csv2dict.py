@@ -1,6 +1,6 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from csv import reader as csv_oku
+from csv    import reader as csv_oku
 from typing import List, Dict
 
 def csv2dict(dosya_adi:str) -> List[Dict[str, str]]:

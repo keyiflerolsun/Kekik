@@ -1,19 +1,19 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from typing import Optional
-from tqdm import tqdm
-import requests
+from typing       import Optional
+from requests     import head, get
 from urllib.parse import unquote
+from tqdm         import tqdm
 
 def indirilebilir_mi(url:str) -> bool:
-    istek  = requests.head(url, allow_redirects=True)
+    istek  = head(url, allow_redirects=True)
     header = istek.headers
     content_type = header.get('content-type')
+
     if 'text' in content_type.lower():
         return False
-    if 'html' in content_type.lower():
-        return False
-    return True
+
+    return 'html' not in content_type.lower()
 
 def dosya_indir(url:str, dosya_adi:str=None) -> Optional[str]:
     kontrol = indirilebilir_mi(url)
@@ -23,12 +23,11 @@ def dosya_indir(url:str, dosya_adi:str=None) -> Optional[str]:
 
     if not dosya_adi:
         dosya_adi = unquote(url.split("/")[-1])
-    else:
-        if "." not in dosya_adi:
-            uzanti = unquote(url.split("/")[-1]).split(".")[-1]
-            dosya_adi = f"{dosya_adi}.{uzanti}"
+    elif "." not in dosya_adi:
+        uzanti = unquote(url.split("/")[-1]).split(".")[-1]
+        dosya_adi = f"{dosya_adi}.{uzanti}"
 
-    istek = requests.get(url, stream=True)
+    istek = get(url, stream=True)
     dosya_boyutu = int(istek.headers.get('content-length', 0))
 
     bar_format   = '{l_bar} [{rate_fmt}] | {bar}| [{n_fmt}B / {total_fmt}B] » [{elapsed} / {remaining}]'

@@ -20,18 +20,19 @@ def dict2json(sozluk:dict, liste_key:str, dosya_adi:str) -> bool:
             gelen_essiz = [dict(sozluk) for sozluk in {tuple(liste_ici.items()) for liste_ici in gelen_veri}]
             gelen_a_z   = sorted(gelen_essiz, key=lambda sozluk: sozluk[liste_key])
 
-            with open(dosya_adi, mode='w', encoding='utf-8') as f:
-                f.write(json.dumps(gelen_a_z, indent=2, ensure_ascii=False, sort_keys=False))
+            with open(dosya_adi, mode='w', encoding='utf-8') as dosya:
+                dosya.write(json.dumps(gelen_a_z, indent=2, ensure_ascii=False, sort_keys=False))
 
             return True
 
         return False
 
     else:
-        with open(dosya_adi, mode='w', encoding='utf-8') as f:
+        with open(dosya_adi, mode='w', encoding='utf-8') as dosya:
             liste = [sozluk]
             essiz = [dict(sozluk) for sozluk in {tuple(liste_ici.items()) for liste_ici in liste}]
             a_z   = sorted(essiz, key=lambda sozluk: sozluk[liste_key])
-            f.write(json.dumps(a_z, indent=2, ensure_ascii=False, sort_keys=False))
+
+            dosya.write(json.dumps(a_z, indent=2, ensure_ascii=False, sort_keys=False))
 
             return True

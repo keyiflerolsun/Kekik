@@ -1,9 +1,9 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from smtplib import SMTP
+from typing               import Union
+from smtplib              import SMTP
 from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from typing import Union
+from email.mime.text      import MIMEText
 
 def mail_gonder(host:str, port:Union[int, str], mail:str, sifre:str, alici:str, konu:str, icerik:str, html:bool=False):
     mesaj = MIMEMultipart('alternative')

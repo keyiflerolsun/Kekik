@@ -1,6 +1,10 @@
-# <img src="https://www.akashtrehan.com/assets/images/emoji/terminal.png" height="48" align="center"> Kekik
+# <img src="https://www.akashtrehan.com/assets/images/emoji/terminal.png" height="42" align="center"> Kekik
 
-![Repo Boyutu](https://img.shields.io/github/repo-size/keyiflerolsun/Kekik) ![Views](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/keyiflerolsun/Kekik&title=Profile%20Views) [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/keyiflerolsun/Kekik)
+![Repo Boyutu](https://img.shields.io/github/repo-size/keyiflerolsun/SpotifyTakipci)
+![Görüntülenme](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/keyiflerolsun/SpotifyTakipci&title=Görüntülenme)
+<a href="https://KekikAkademi.org/Kahve" target="_blank"><img src="https://img.shields.io/badge/☕️-Kahve Ismarla-ffdd00" title="☕️" style="padding-left:5px;"></a>
+[![Gitpod](https://img.shields.io/badge/Gitpod-Çalıştır-blue?logo=gitpod)](https://gitpod.io/#https://github.com/keyiflerolsun/SpotifyTakipci)
+[![Run on repl.it](https://img.shields.io/badge/Replit-Çalıştır-green?logo=replit)](https://repl.it/github/keyiflerolsun/SpotifyTakipci)
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/Kekik)
 ![PyPI - Status](https://img.shields.io/pypi/status/Kekik)
@@ -11,7 +15,7 @@
 
 *İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..*
 
-[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
+[![ForTheBadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 [![ForTheBadge built-with-love](http://ForTheBadge.com/images/badges/built-with-love.svg)](https://GitHub.com/keyiflerolsun/)
 
 ## 🚀 Kurulum
@@ -121,7 +125,7 @@ print(csv2dict('Config/ALICILAR.csv'))
 
 ## ♻️ İletişim
 
-*Benimle iletişime geçmek isterseniz, **Telegram**'dan mesaj göndermekten çekinmeyin;* [@keyiflerolsun](https://t.me/keyiflerolsun)
+*Benimle iletişime geçmek isterseniz, **Telegram**'dan mesaj göndermekten çekinmeyin;* [@keyiflerolsun](https://t.me/KekikKahve)
 
 ##
 

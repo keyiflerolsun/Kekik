@@ -5,10 +5,10 @@ def zaman_donustur(saniye: int) -> str:
     saat, dakika   = divmod(dakika, 60)
     gun, saat      = divmod(saat, 24)
     toparla = (
-        (f'{gun} gün, ' if gun else "")
-        + (f'{saat} saat, ' if saat else "")
-        + (f'{dakika} dakika, ' if dakika else "")
-        + (f'{saniye} saniye, ' if saniye else "")
+        (f"{round(gun)} gün, " if gun else "")
+        + (f"{round(saat)} saat, " if saat else "")
+        + (f"{round(dakika)} dakika, " if dakika else "")
+        + (f"{round(saniye)} saniye, " if saniye else "")
     )
 
     return toparla[:-2]

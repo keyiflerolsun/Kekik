@@ -1,9 +1,9 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from os import name as sistem
+from os         import name as sistem
 from subprocess import check_output, STDOUT
-from requests import get
-from uuid import uuid5, NAMESPACE_DNS
+from requests   import get
+from uuid       import uuid5, NAMESPACE_DNS
 
 def str2uuid(metin) -> str:
     return str(uuid5(NAMESPACE_DNS, str(metin))).upper()
@@ -33,4 +33,4 @@ def benim_hwid() -> str:
 
 def hwid_kontrol(kontrol_url:str) -> bool:
     # Çevrimiçi HWID Kontrolü
-    return bool(benim_hwid() in get(kontrol_url).text)
+    return benim_hwid() in get(kontrol_url).text

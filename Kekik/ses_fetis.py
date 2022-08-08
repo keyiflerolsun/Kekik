@@ -1,8 +1,8 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 from speech_recognition import Recognizer, Microphone
-from gtts import gTTS
-from os import system, remove
+from gtts               import gTTS
+from os                 import system, remove
 
 def ses2yazi() -> str:
     dinleyici = Recognizer()
