@@ -104,6 +104,32 @@ print(csv2dict('Config/ALICILAR.csv'))
 # [{'mail': 'keyiflerolsun@gmail.com', 'isim': 'Ömer Faruk'}, {'mail': 'bakalim@gmail.com', 'isim': ''}]
 ```
 
+### **[dosya_2_set](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya_2_set.py)**
+```python
+from Kekik import dosya_2_set
+
+print(dosya_2_set("_config.yml"))
+
+# {'theme: jekyll-theme-cayman', 'show_downloads: false'}
+```
+
+### **[proxy_ver](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/proxy_ver.py)**
+```python
+from Kekik import proxy_ver
+
+print(proxy_ver("Proxiler.txt", "requests"))
+
+# {'http': 'http://keyiflerolsun:KekikAkademi@127.0.0.1:3310', 'https': 'http://keyiflerolsun:KekikAkademi@127.0.0.1:3310'}
+
+print(proxy_ver("Proxiler.txt", "aiohttp"))
+
+# ('http://127.0.0.1:3310', BasicAuth(login='keyiflerolsun', password='KekikAkademi', encoding='utf-8'))
+
+print(proxy_ver("proxiler.txt", "selenium"))
+
+# 127.0.0.1:3310:keyiflerolsun:KekikAkademi
+```
+
 ### **[dict2json](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dict2json.py)**
 ### **[dosya_indir](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya_indir.py)**
 ### **[benim_hwid](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/hwid_kontrol.py)**
