@@ -4,6 +4,34 @@ from rich.console import Console
 
 konsol = Console(log_path=False, highlight=False)
 
+#---------------------------------------------------#
+from os        import system as cli
+from platform  import system as platform
+from platform  import node
+
+try:
+    from os import getlogin
+    kullanici_adi = getlogin()
+except OSError:
+    from pwd import getpwuid
+    from os  import geteuid
+    kullanici_adi = getpwuid(geteuid())[0]
+
+oturum = f"{kullanici_adi}@{node()}"
+
+def temizle():
+    if platform() == "Windows":
+        cli("cls")
+    else:
+        cli("clear")
+
+from os       import getcwd
+from platform import system
+
+konum   = getcwd().split("\\") if system() == "Windows" else getcwd().split("/")
+secenek = lambda : konsol.input(f'[red]{oturum}:[/][cyan]~/../{konum[-2]}/{konum[-1]} >> ')
+
+#---------------------------------------------------#
 from contextlib import suppress
 from pathlib    import Path
 from sys        import exit
