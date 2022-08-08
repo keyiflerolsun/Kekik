@@ -1,13 +1,13 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 from typing  import Literal
-from Kekik   import dosya_2_set
+from Kekik   import dosya2set
 from aiohttp import BasicAuth
 from random  import shuffle, choice
 
 def proxy_ver(proxi_txt:str, tur=Literal["requests", "aiohttp", "selenium"]) -> None | dict[str, str] | ((str and BasicAuth) or (str and None)) | str:
 
-    proxiler = list(dosya_2_set(proxi_txt)) if dosya_2_set(proxi_txt) else None
+    proxiler = list(dosya2set(proxi_txt)) if dosya2set(proxi_txt) else None
 
     if not proxiler:
         return None

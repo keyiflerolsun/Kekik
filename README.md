@@ -104,11 +104,20 @@ print(csv2dict('Config/ALICILAR.csv'))
 # [{'mail': 'keyiflerolsun@gmail.com', 'isim': 'Ömer Faruk'}, {'mail': 'bakalim@gmail.com', 'isim': ''}]
 ```
 
-### **[dosya_2_set](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya_2_set.py)**
+### **[dict2csv](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dict2csv.py)**
 ```python
-from Kekik import dosya_2_set
+from Kekik import dict2csv
 
-print(dosya_2_set("_config.yml"))
+print(dict2csv('Config/ALICILAR.csv', [{'isim': 'Ömer Faruk', 'soyisim': 'Sancak'}, {'isim': 'Kekik', 'soyisim': 'Akademi'}]))
+
+# True
+```
+
+### **[dosya2set](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya2set.py)**
+```python
+from Kekik import dosya2set
+
+print(dosya2set("_config.yml"))
 
 # {'theme: jekyll-theme-cayman', 'show_downloads: false'}
 ```
