@@ -5,29 +5,22 @@ from rich.console import Console
 konsol = Console(log_path=False, highlight=False)
 
 #---------------------------------------------------#
-from os        import system as cli
-from platform  import node   as pc_adi
-from platform  import system as platform
+import os, platform, pwd
 
 try:
-    from os import getlogin
-    kullanici_adi = getlogin()
+    kullanici_adi = os.getlogin()
 except OSError:
-    from pwd import getpwuid
-    from os  import geteuid
-    kullanici_adi = getpwuid(geteuid())[0]
+    kullanici_adi = pwd.getpwuid(os.geteuid())[0]
 
-oturum = f"{kullanici_adi}@{pc_adi()}"
+oturum = f"{kullanici_adi}@{platform.node()}"
 
 def temizle():
-    if platform() == "Windows":
-        cli("cls")
+    if platform.system() == "Windows":
+        os.system("cls")
     else:
-        cli("clear")
+        os.system("clear")
 
-from os import getcwd
-
-konum   = getcwd().split("\\") if platform() == "Windows" else getcwd().split("/")
+konum   = os.getcwd().split("\\") if platform.system() == "Windows" else os.getcwd().split("/")
 secenek = lambda : konsol.input(f'[red]{oturum}:[/][cyan]~/../{konum[-2]}/{konum[-1]} >> ')
 
 #---------------------------------------------------#
