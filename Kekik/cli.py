@@ -21,7 +21,12 @@ def temizle():
         os.system("clear")
 
 konum   = os.getcwd().split("\\") if platform.system() == "Windows" else os.getcwd().split("/")
-secenek = lambda : konsol.input(f'[red]{oturum}:[/][cyan]~/../{konum[-2]}/{konum[-1]} >> ')
+secenek = lambda : konsol.input(f"[red]{oturum}:[/][cyan]~/../{konum[-2]}/{konum[-1]} >> ")
+
+def hata_salla(hata:Exception) -> None:
+    "Yakalanan Exception'ı ekranda gösterir.."
+
+    konsol.print(f"[bold yellow2]{type(hata).__name__}[/] [bold magenta]||[/] [bold grey74]{hata}[/]", width=70, justify="center")
 
 #---------------------------------------------------#
 from contextlib import suppress
@@ -68,6 +73,6 @@ import sys, logging
 logging.disable(sys.maxsize)
 
 import asyncio, platform
-if platform.system() == 'Windows':
+if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 #---------------------------------------------------#
