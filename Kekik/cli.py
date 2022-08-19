@@ -2,14 +2,15 @@
 
 from rich.console import Console
 
-konsol = Console(log_path=False, highlight=False)
+konsol = Console(log_path=False)
 
 #---------------------------------------------------#
-import os, platform, pwd
+import os, platform
 
-try:
+if os.name == "nt":
     kullanici_adi = os.getlogin()
-except OSError:
+else:
+    import pwd
     kullanici_adi = pwd.getpwuid(os.geteuid())[0]
 
 oturum = f"{kullanici_adi}@{platform.node()}"
