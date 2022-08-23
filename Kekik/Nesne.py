@@ -91,7 +91,7 @@ class VeriTipiHatasi(Exception):
     def __str__(self):
         return f"\n\n{self.veri} -> {self.mesaj}"
 
-class Nesne:
+class Nesne(object):
     """
     Sözlük Veri Tipini Python Nesnesine Çevirir.
 
@@ -110,27 +110,35 @@ class Nesne:
     Metodlar
     ----------
         >>> .gorsel(girinti:int, kademe:int) -> None:
-        Oluşan Nesneyi Görsel Biçimde Konsola Yazdırır.
+        >>> # Oluşan Nesneyi Görsel Biçimde Konsola Yazdırır.
 
-            >>> .gorsel(girinti=0, kademe=1)
+        >>> # Örnek; <---------------------------------- #
+        >>> .gorsel(girinti=0, kademe=1)
+
+        >>> # ------------------------------------------ #
+        >>> .anahtarlar(nesne:Nesne) -> list:
+        >>> ['isSuccess', 'statusCode', 'error', 'result', 'headers']
     """
     def __repr__(self) -> str:
         mesaj = f"{__class__.__name__}("
-        for anahtar in self.sozluk.keys():
+        for anahtar in self.__sozluk.keys():
             mesaj += f"{anahtar}={self.__dict__[anahtar]}, "
 
         return f"{mesaj.rstrip(', ')})"
 
+    def __str__(self) -> str:
+        return repr(self)
+
     def __init__(self, sozluk:dict):
-        self.sozluk = sozluk
+        self.__sozluk = sozluk
 
-        if not isinstance(self.sozluk, dict):
-            raise VeriTipiHatasi(self.sozluk)
+        if not isinstance(self.__sozluk, dict):
+            raise VeriTipiHatasi(self.__sozluk)
 
-        # https://stackoverflow.com/a/1305682/13390799
-        for anahtar, deger in self.sozluk.items():
-            if isinstance(deger, (list, tuple)):
-                setattr(
+        # https://stackoverflow.com/questions/1305532/how-to-convert-a-nested-python-dict-to-object
+        for anahtar, deger in self.__sozluk.items():
+            if isinstance(deger, (tuple, list, set, frozenset)):
+                object.__setattr__(
                     self,
                     anahtar,
                     [
@@ -139,11 +147,52 @@ class Nesne:
                     ]
                 )
             else:
-                setattr(
+                object.__setattr__(
                     self,
                     anahtar,
                     Nesne(deger) if isinstance(deger, dict) else deger
                 )
+
+    # * Sözlük Benzeri -> erişim / güncellemeler
+    def __getitem__(self, anahtar):
+        deger = self.__dict__[anahtar]
+        if isinstance(deger, dict):  # * Yinelemeli olarak alt sözlükleri nesne olarak görüntüle
+            deger = Nesne(deger)
+        return deger
+
+    def __setitem__(self, anahtar, deger):
+        self.__dict__[anahtar] = deger
+
+    def __delitem__(self, anahtar):
+        del self.__dict__[anahtar]
+
+    # * Nesne Benzeri -> erişim / güncellemeler
+    def __getattr__(self, anahtar):
+        return self[anahtar]
+
+    def __setattr__(self, anahtar, deger):
+        self[anahtar] = deger
+
+    def __delattr__(self, anahtar):
+        del self[anahtar]
+
+    @staticmethod
+    def anahtarlar(veri) -> list | None:
+        """
+        Parametre olarak verilen Nesne Verisinin Anahtarlarını döndürür.
+
+        Parametreler
+        ------------
+            >>> veri (Nesne) # Anahtarları İstenen Nesne Verisi
+
+        Dönüt
+        -----
+        >>> list | None
+        """
+        if isinstance(veri, Nesne):
+            if sozluk := veri.__dict__["_Nesne__sozluk"]:
+                if isinstance(sozluk, dict):
+                    return list(veri.__dict__["_Nesne__sozluk"].keys())
 
     def gorsel(self, girinti:int=None, kademe:int=Decimal('Infinity')) -> None:
         """
@@ -164,4 +213,4 @@ class Nesne:
         -----
         >>> None
         """
-        print(sikici_yaz(self.sozluk, girinti, kademe))
+        print(sikici_yaz(self.__sozluk, girinti, kademe))
