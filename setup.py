@@ -10,7 +10,7 @@ setup(
     packages     = ["Kekik"],
 
     name         = "Kekik",
-    version      = "1.0.3",
+    version      = "1.0.4",
     url          = "https://github.com/keyiflerolsun/Kekik",
     description  = 'İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..',
     keywords     = ["Kekik", 'KekikAkademi', 'keyiflerolsun'],
@@ -26,7 +26,7 @@ setup(
         'Programming Language :: Python :: 3'
     ],
 
-    python_requires  = '>=3.8',
+    python_requires  = '>=3.10',
     install_requires = [
         "setuptools",
         "wheel",

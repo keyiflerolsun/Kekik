@@ -17,4 +17,5 @@ from Kekik.mail_gonder     import mail_gonder
 from Kekik.dosya2set       import dosya2set
 from Kekik.proxy_ver       import proxy_ver
 from Kekik.kisi_ver        import kisi_ver
+from Kekik.Nesne           import Nesne
 ####

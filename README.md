@@ -152,6 +152,26 @@ print(kisi_ver("en"))
 # {'isim': 'Laurel', 'soyisim': 'Blake', 'kullanici_adi': 'Laur42Blak', 'biyografi': 'From little acorns mighty oaks do grow.', 'profil_resmi': 'tmp/Laur42Blak.jpg'}
 ```
 
+### **[Nesne](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/Nesne.py)**
+```python
+from Kekik import Nesne
+
+nesne = Nesne({"Merhaba": "Dünya"})
+
+print(nesne)
+# Nesne(Merhaba=Dünya)
+
+nesne.gorsel(girinti=0, kademe=1)
+'''
+Nesne(
+        Merhaba=...
+)
+'''
+
+print(nesne.Merhaba)
+# Dünya
+```
+
 ### **[dict2json](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dict2json.py)**
 ### **[dosya_indir](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya_indir.py)**
 ### **[benim_hwid](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/hwid_kontrol.py)**

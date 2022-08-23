@@ -4,11 +4,31 @@ import os, json
 
 def dict2json(sozluk:dict, liste_key:str, dosya_adi:str) -> bool:
     """
-    dict2json({
-        'kullanici_id'  : message.from_user.id,
-        'kullanici_nick': f"@{message.from_user.username}" if message.from_user.username else None,
-        'kullanici_adi' : f"{message.from_user.first_name or ''} {message.from_user.last_name or ''}".strip()
-    }, liste_key="kullanici_id", dosya_adi=kullanicilar)
+    Verilen `sözlük` tipli veriyi ilgili `anahtar`a göre `hedef dosya`ya yazar.
+
+    Parametreler
+    ------------
+        >>> sozluk    (dict) # Yazılması İstenen Veri
+        >>> liste_key (str)  # Sıralanması İstenen Anahtar
+        >>> dosya_adi (str)  # Yazılması İstenen Json Dosya Yolu
+
+    Kullanım
+    --------
+    ```
+    dict2json(
+        sozluk    = {
+            'id'            : 1,
+            'kullanici_adi' : "@keyiflerolsun",
+            'ad_soyad'      : "Ömer Faruk Sancak"
+        },
+        liste_key = "kullanici_id",
+        dosya_adi = "kullanicilar.json"
+    )
+    ```
+
+    Dönüt
+    -----
+        >>> bool
     """
     if os.path.isfile(dosya_adi):
         with open(dosya_adi, encoding='utf-8') as gelen_json:
