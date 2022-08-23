@@ -118,6 +118,10 @@ class Nesne(object):
         >>> # ------------------------------------------ #
         >>> .anahtarlar(nesne:Nesne) -> list:
         >>> ['isSuccess', 'statusCode', 'error', 'result', 'headers']
+
+        >>> # ------------------------------------------ #
+        >>> .sozluk -> dict:
+        >>> # girdinin son hali
     """
     def __repr__(self) -> str:
         mesaj = f"{__class__.__name__}("
@@ -176,6 +180,14 @@ class Nesne(object):
     def __delattr__(self, anahtar):
         del self[anahtar]
 
+    @property
+    def sozluk(self) -> dict:
+        """Girdinin Son Hali"""
+        veri = self.__dict__.copy()
+        del veri["_Nesne__sozluk"]
+
+        return veri
+
     @staticmethod
     def anahtarlar(veri) -> list | None:
         """
@@ -190,9 +202,12 @@ class Nesne(object):
         >>> list | None
         """
         if isinstance(veri, Nesne):
-            if sozluk := veri.__dict__["_Nesne__sozluk"]:
+            veri = veri.__dict__.copy()
+            del veri["_Nesne__sozluk"]
+
+            if sozluk := veri:
                 if isinstance(sozluk, dict):
-                    return list(veri.__dict__["_Nesne__sozluk"].keys())
+                    return list(veri.keys())
 
     def gorsel(self, girinti:int=None, kademe:int=Decimal('Infinity')) -> None:
         """
@@ -213,4 +228,10 @@ class Nesne(object):
         -----
         >>> None
         """
-        print(sikici_yaz(self.__sozluk, girinti, kademe))
+        try:
+            veri = self.__dict__.copy()
+            del veri["_Nesne__sozluk"]
+
+            print(sikici_yaz(veri, girinti, kademe))
+        except KeyError:
+            print(sikici_yaz(self.__sozluk, girinti, kademe))
