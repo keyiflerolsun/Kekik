@@ -1,5 +1,25 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
+#---------------------------------------------------#
+from signal import signal, SIGINT
+
+def sinyal_yakala(signal, frame):
+    cikis_yap()
+
+signal(SIGINT, sinyal_yakala)
+
+from warnings import filterwarnings, simplefilter
+filterwarnings("ignore")
+simplefilter("ignore")
+
+import sys, logging
+logging.disable(sys.maxsize)
+
+import asyncio, platform
+if platform.system() == "Windows":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+#---------------------------------------------------#
+
 from rich.console import Console
 
 konsol = Console(log_path=False)
@@ -43,6 +63,8 @@ def bellek_temizle():
         [rmtree(alt_dizin)  for alt_dizin in Path(".").rglob("*.build")]
         [alt_dizin.unlink() for alt_dizin in Path(".").rglob("*.bak")]
 
+bellek_temizle()
+
 def cikis_yap(_print=True):
     if _print:
         konsol.print("\n\n")
@@ -53,27 +75,15 @@ def cikis_yap(_print=True):
 def hata_yakala(hata:Exception):
     if (hata in {KeyboardInterrupt, SystemExit, EOFError, RuntimeError}) or (str(hata).startswith(("'coroutine' object is not iterable", "'KekikT"))):
         cikis_yap()
-    print(f"\n\n[bold red]{format_exc()}")
+    konsol.print(f"\n\n[bold red]{format_exc()}")
     cikis_yap()
 
-#---------------------------------------------------#
-from signal import signal, SIGINT
+def log_salla(sol:str, orta:str, sag:str) -> None:
+    "Sol orta ve sağ şeklinde ekranda hizalanmış tek satır log verir.."
 
-def sinyal_yakala(signal, frame):
-    cikis_yap()
+    sol  = f"{sol[:13]}[bright_blue]~[/]"  if len(sol)  > 14 else sol
+    orta = f"{orta[:19]}[bright_blue]~[/]" if len(orta) > 20 else orta
+    sag  = f"{sag[:14]}[bright_blue]~[/]"  if len(sag)  > 15 else sag
 
-signal(SIGINT, sinyal_yakala)
-
-bellek_temizle()
-
-from warnings import filterwarnings, simplefilter
-filterwarnings("ignore")
-simplefilter("ignore")
-
-import sys, logging
-logging.disable(sys.maxsize)
-
-import asyncio, platform
-if platform.system() == "Windows":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-#---------------------------------------------------#
+    bicimlendir = f"[bold red]{sol:14}[/] [green]||[/] [yellow]{orta:20}[/] {'':>2}[green]||[/] [magenta]{sag:^16}[/]"
+    konsol.log(bicimlendir)
