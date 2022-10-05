@@ -8,16 +8,16 @@ def sinyal_yakala(signal, frame):
 
 signal(SIGINT, sinyal_yakala)
 
-from warnings import filterwarnings, simplefilter
-filterwarnings("ignore")
-simplefilter("ignore")
+# from warnings import filterwarnings, simplefilter
+# filterwarnings("ignore")
+# simplefilter("ignore")
 
-import sys, logging
-logging.disable(sys.maxsize)
+# import sys, logging
+# logging.disable(sys.maxsize)
 
-import asyncio, platform
-if platform.system() == "Windows":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+# import asyncio, platform
+# if platform.system() == "Windows":
+#     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 #---------------------------------------------------#
 
 from rich.console import Console
