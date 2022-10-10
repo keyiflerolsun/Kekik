@@ -4,7 +4,7 @@
 from Kekik.slugify         import slugify
 from Kekik.link_islemleri  import link_ayikla, youtube_link_mi
 from Kekik.okunabilir_byte import okunabilir_byte
-from Kekik.zaman_donustur  import zaman_donustur
+from Kekik.zaman_donustur  import sure2saniye, zaman_donustur
 from Kekik.dict2json       import dict2json
 from Kekik.qr_ver          import qr_ver
 from Kekik.dosya_indir     import dosya_indir

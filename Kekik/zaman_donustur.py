@@ -1,5 +1,8 @@
 # https://github.com/Skuzzy_xD/TelePyroBot
 
+def sure2saniye(zaman:str) -> int:
+    return sum(int(dilim) * 60 ** say for say, dilim in enumerate(reversed(zaman.split(":"))))
+
 def zaman_donustur(saniye: int) -> str:
     dakika, saniye = divmod(saniye, 60)
     saat, dakika   = divmod(dakika, 60)

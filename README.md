@@ -68,11 +68,14 @@ print(okunabilir_byte(132456498564))
 
 ### **[zaman_donustur](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/zaman_donustur.py)**
 ```python
-from Kekik import zaman_donustur
+from Kekik import sure2saniye, zaman_donustur
 
-print(zaman_donustur(123456))
+kac_saniye = sure2saniye("15:23")
+print(kac_saniye)
+# 923
 
-# 1 gün, 10 saat, 17 dakika, 36 saniye
+zaman_donustur(kac_saniye)
+# 15 dakika, 23 saniye
 ```
 
 ### **[qr_ver](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/qr_ver.py)**
@@ -170,6 +173,19 @@ Nesne(
 
 print(nesne.Merhaba)
 # Dünya
+```
+
+### **[liste_fetis](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/liste_fetis.py)**
+```python
+from Kekik import liste_fetis
+
+liste = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+liste_fetis.n_adete_bol(liste, adet=3)
+# [[1, 4, 7, 10], [2, 5, 8], [3, 6, 9]]
+
+liste_fetis.n_er_hale_getir(liste, adet=3)
+# [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10]]
 ```
 
 ### **[dict2json](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dict2json.py)**
