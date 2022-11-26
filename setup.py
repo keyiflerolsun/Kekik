@@ -10,7 +10,7 @@ setup(
     packages     = ["Kekik"],
 
     name         = "Kekik",
-    version      = "1.0.9",
+    version      = "1.1.0",
     url          = "https://github.com/keyiflerolsun/Kekik",
     description  = "İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..",
     keywords     = ["Kekik", "KekikAkademi", "keyiflerolsun"],
