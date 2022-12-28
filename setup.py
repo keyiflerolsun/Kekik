@@ -10,7 +10,7 @@ setup(
     packages     = ["Kekik"],
 
     name         = "Kekik",
-    version      = "1.1.1",
+    version      = "1.1.2",
     url          = "https://github.com/keyiflerolsun/Kekik",
     description  = "İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..",
     keywords     = ["Kekik", "KekikAkademi", "keyiflerolsun"],
@@ -33,7 +33,7 @@ setup(
         "pytz",
         "requests",
         "aiohttp",
-        "thispersondoesnotexist",
+        # "thispersondoesnotexist",
         "simplejson",
         "rich",
         "tabulate",
@@ -42,6 +42,6 @@ setup(
         "pyfiglet",
         "Pillow",
         "notify-py",
-        "py3-validate-email"
+        # "py3-validate-email"
     ]
 )

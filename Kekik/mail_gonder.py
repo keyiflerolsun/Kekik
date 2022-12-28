@@ -1,8 +1,8 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from validate_email       import validate_email
-from logging              import getLogger
-getLogger("validate_email").setLevel("ERROR")
+# from validate_email       import validate_email
+# from logging              import getLogger
+# getLogger("validate_email").setLevel("ERROR")
 
 from typing               import Union
 from smtplib              import SMTP
@@ -23,8 +23,8 @@ def mail_gonder(
     icerik:str,
     html:bool=False
 ) -> bool:
-    if not validate_email(alici_mail):
-        return False
+    # if not validate_email(alici_mail):
+    #     return False
 
     mesaj = MIMEMultipart("alternative")
     mesaj["Subject"] = konu
