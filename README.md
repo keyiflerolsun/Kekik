@@ -1,17 +1,16 @@
 # <img src="https://www.akashtrehan.com/assets/images/emoji/terminal.png" height="42" align="center"> Kekik
 
-![Repo Boyutu](https://img.shields.io/github/repo-size/keyiflerolsun/SpotifyTakipci)
-![Görüntülenme](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/keyiflerolsun/SpotifyTakipci&title=Görüntülenme)
-<a href="https://KekikAkademi.org/Kahve" target="_blank"><img src="https://img.shields.io/badge/☕️-Kahve Ismarla-ffdd00" title="☕️" style="padding-left:5px;"></a>
-[![Gitpod](https://img.shields.io/badge/Gitpod-Çalıştır-blue?logo=gitpod)](https://gitpod.io/#https://github.com/keyiflerolsun/SpotifyTakipci)
-[![Run on repl.it](https://img.shields.io/badge/Replit-Çalıştır-green?logo=replit)](https://repl.it/github/keyiflerolsun/SpotifyTakipci)
+![Repo Boyutu](https://img.shields.io/github/repo-size/keyiflerolsun/Kekik?logo=git&logoColor=white)
+![Görüntülenme](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/keyiflerolsun/Kekik&title=Görüntülenme)
+<a href="https://KekikAkademi.org/Kahve" target="_blank"><img src="https://img.shields.io/badge/☕️-Kahve Ismarla-ffdd00" title="☕️ Kahve Ismarla" style="padding-left:5px;"></a>
 
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/Kekik)
-![PyPI - Status](https://img.shields.io/pypi/status/Kekik)
-![PyPI](https://img.shields.io/pypi/v/Kekik)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/Kekik)
-![PyPI - Wheel](https://img.shields.io/pypi/wheel/Kekik)
-![PyPI - License](https://img.shields.io/pypi/l/Kekik)
+![Python Version](https://img.shields.io/pypi/pyversions/Kekik?logo=python&logoColor=white)
+![License](https://img.shields.io/pypi/l/Kekik?logo=gnu&logoColor=white)
+![Status](https://img.shields.io/pypi/status/Kekik?logo=windowsterminal&logoColor=white)
+
+![PyPI](https://img.shields.io/pypi/v/Kekik?logo=pypi&logoColor=white)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/Kekik?logo=pypi&logoColor=white)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/Kekik?logo=pypi&logoColor=white)
 
 *İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..*
 
