@@ -1,24 +1,45 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
+# * pip3 install -U PyAudio SpeechRecognition gTTS playsound
+
 from speech_recognition import Recognizer, Microphone
 from gtts               import gTTS
+from playsound          import playsound
 from os                 import system, remove
 
 def ses2yazi() -> str:
     dinleyici = Recognizer()
-    with Microphone() as source:
+
+    import os, sys, contextlib
+
+    @contextlib.contextmanager
+    def ignore_stderr():
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        old_stderr = os.dup(2)
+        sys.stderr.flush()
+        os.dup2(devnull, 2)
+        os.close(devnull)
+        try:
+            yield
+        finally:
+            os.dup2(old_stderr, 2)
+            os.close(old_stderr)
+
+    with ignore_stderr() as _, Microphone() as source:
         dinleyici.adjust_for_ambient_noise(source)
+        print("Konuşmaya Başla")
         veri = dinleyici.record(source, duration=5)
         yazi = dinleyici.recognize_google(veri, language="tr")
+
     return yazi
 
 def yazi2ses(metin:str, mp3_adi:str) -> str:
-    tts = gTTS(metin.strip(), lang="tr", slow=True)
+    tts = gTTS(metin.strip(), lang="tr", slow=False)
     tts.save(f"{mp3_adi}.mp3")
     return f"{mp3_adi}.mp3"
 
 def cevir(girdi_dosya:str, cikti_dosya:str) -> str:
-    system(f'ffmpeg -hide_banner -loglevel error -y -i {girdi_dosya} -af "asetrate=44100*0.9, aresample=44100, atempo=1/0.9" {cikti_dosya}')
+    system(f'ffmpeg -hide_banner -loglevel error -y -i {girdi_dosya} -af "asetrate=44100*0.9, aresample=44100, atempo=1/1.15" {cikti_dosya}')
     remove(girdi_dosya)
     return cikti_dosya
 
@@ -26,4 +47,8 @@ def inceses(metin:str, cikti_adi:str) -> str:
     _gecici = yazi2ses(metin, "gecici")
     return cevir(_gecici, f"{cikti_adi}.mp3")
 
-# print(inceses("Selam Kanka Naber bakalım?", "selam"))
+
+# ne_dedim = ses2yazi()
+# print(ne_dedim)
+# playsound(yazi2ses(ne_dedim, "dinlenen_ses"))
+# playsound(inceses(ne_dedim, "dinlenen_ses"))
