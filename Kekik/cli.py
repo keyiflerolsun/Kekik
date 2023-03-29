@@ -20,6 +20,10 @@ signal(SIGINT, sinyal_yakala)
 #     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 #---------------------------------------------------#
 
+from rich import pretty, traceback
+pretty.install()
+traceback.install(show_locals=False)
+
 from rich.console import Console
 
 konsol = Console(log_path=False)
