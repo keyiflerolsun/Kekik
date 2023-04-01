@@ -8,7 +8,7 @@ from gtts               import gTTS
 from playsound          import playsound
 from os                 import system, remove
 
-def ses2yazi() -> str:
+def ses2yazi(n_saniye_dinle:int | None) -> str:
     dinleyici = Recognizer()
 
     import os, sys, contextlib
@@ -29,8 +29,10 @@ def ses2yazi() -> str:
     with ignore_stderr() as _, Microphone() as source:
         dinleyici.adjust_for_ambient_noise(source)
         konsol.log("[purple][~] Mikrofon Dinleniyor..")
-        # veri = dinleyici.record(source, duration=5)
-        veri = dinleyici.listen(source)
+        if n_saniye_dinle:
+            veri = dinleyici.record(source, duration=n_saniye_dinle)
+        else:
+            veri = dinleyici.listen(source)
         konsol.log("[magenta][~] Ses Erişimi Tamamlandı..")
         yazi = dinleyici.recognize_google(veri, language="tr")
 
