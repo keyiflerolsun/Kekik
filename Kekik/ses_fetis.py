@@ -2,6 +2,7 @@
 
 # * pip3 install -U PyAudio SpeechRecognition gTTS playsound
 
+from Kekik.cli          import konsol
 from speech_recognition import Recognizer, Microphone
 from gtts               import gTTS
 from playsound          import playsound
@@ -27,8 +28,10 @@ def ses2yazi() -> str:
 
     with ignore_stderr() as _, Microphone() as source:
         dinleyici.adjust_for_ambient_noise(source)
-        print("Konuşmaya Başla")
-        veri = dinleyici.record(source, duration=5)
+        konsol.log("[purple][~] Mikrofon Dinleniyor..")
+        # veri = dinleyici.record(source, duration=5)
+        veri = dinleyici.listen(source)
+        konsol.log("[magenta][~] Ses Erişimi Tamamlandı..")
         yazi = dinleyici.recognize_google(veri, language="tr")
 
     return yazi
