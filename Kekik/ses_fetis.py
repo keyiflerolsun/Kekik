@@ -3,7 +3,6 @@
 # * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound pydub
 
 from Kekik.cli          import konsol
-from Typing             import Literal
 from speech_recognition import Recognizer, Microphone, UnknownValueError, WaitTimeoutError, AudioFile
 from beepy              import beep
 from gtts               import gTTS
