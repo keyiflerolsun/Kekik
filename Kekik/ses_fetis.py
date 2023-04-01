@@ -1,13 +1,14 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-# * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound
+# * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound pydub
 
 from Kekik.cli          import konsol
-from speech_recognition import Recognizer, Microphone, UnknownValueError, WaitTimeoutError
+from speech_recognition import Recognizer, Microphone, UnknownValueError, WaitTimeoutError, AudioFile
 from beepy              import beep
 from gtts               import gTTS
 from playsound          import playsound
 from os                 import system, remove
+from pydub              import AudioSegment
 
 def ses2yazi(n_saniye_dinle:int | None, bip:bool=True) -> str:
     dinleyici = Recognizer()
@@ -70,3 +71,18 @@ def inceses(metin:str, cikti_adi:str) -> str:
 # print(ne_dedim)
 # playsound(yazi2ses(ne_dedim, "dinlenen_ses"))
 # playsound(inceses(ne_dedim, "dinlenen_ses"))
+
+
+def dosya2yazi(dosya_yolu:str) -> None:
+    gecici_dosya = "__temp.wav"
+
+    ses = AudioSegment.from_mp3(dosya_yolu)
+    ses.export(gecici_dosya, format="wav")
+
+    dinleyici = Recognizer()
+    with AudioFile(gecici_dosya) as source:
+        audio_data = dinleyici.record(source)
+        text = dinleyici.recognize_google(audio_data, language="tr-TR")
+
+    remove(gecici_dosya)
+    return text
