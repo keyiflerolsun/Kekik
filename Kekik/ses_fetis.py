@@ -3,7 +3,7 @@
 # * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound
 
 from Kekik.cli          import konsol
-from speech_recognition import Recognizer, Microphone, UnknownValueError
+from speech_recognition import Recognizer, Microphone, UnknownValueError, WaitTimeoutError
 from beepy              import beep
 from gtts               import gTTS
 from playsound          import playsound
@@ -43,7 +43,7 @@ def ses2yazi(n_saniye_dinle:int | None, bip:bool=True) -> str:
             yazi = dinleyici.recognize_google(veri, language="tr")
 
             konsol.log("[magenta][~] Ses Erişimi Tamamlandı..")
-        except UnknownValueError:
+        except (UnknownValueError, WaitTimeoutError):
             yazi = ""
         except Exception as hata:
             konsol.log(f"[red][!] Hata: {type(hata).__name__}")
