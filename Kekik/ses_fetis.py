@@ -3,13 +3,13 @@
 # * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound
 
 from Kekik.cli          import konsol
-from speech_recognition import Recognizer, Microphone
+from speech_recognition import Recognizer, Microphone, UnknownValueError
 from beepy              import beep
 from gtts               import gTTS
 from playsound          import playsound
 from os                 import system, remove
 
-def ses2yazi(n_saniye_dinle:int | None) -> str:
+def ses2yazi(n_saniye_dinle:int | None, bip:bool=True) -> str:
     dinleyici = Recognizer()
 
     import os, sys, contextlib
@@ -29,14 +29,25 @@ def ses2yazi(n_saniye_dinle:int | None) -> str:
 
     with ignore_stderr() as _, Microphone() as source:
         dinleyici.adjust_for_ambient_noise(source)
-        beep()
+
+        if bip:
+            beep()
         konsol.log("[purple][~] Mikrofon Dinleniyor..")
-        if n_saniye_dinle:
-            veri = dinleyici.record(source, duration=n_saniye_dinle)
-        else:
-            veri = dinleyici.listen(source)
-        konsol.log("[magenta][~] Ses Erişimi Tamamlandı..")
-        yazi = dinleyici.recognize_google(veri, language="tr")
+
+        try:
+            if n_saniye_dinle:
+                veri = dinleyici.record(source, duration=n_saniye_dinle)
+            else:
+                veri = dinleyici.listen(source, timeout=5)
+
+            yazi = dinleyici.recognize_google(veri, language="tr")
+
+            konsol.log("[magenta][~] Ses Erişimi Tamamlandı..")
+        except UnknownValueError:
+            yazi = ""
+        except Exception as hata:
+            konsol.log(f"[red][!] Hata: {type(hata).__name__}")
+            yazi = ""
 
     return yazi
 
