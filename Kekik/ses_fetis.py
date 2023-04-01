@@ -1,9 +1,10 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-# * pip3 install -U PyAudio SpeechRecognition gTTS playsound
+# * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound
 
 from Kekik.cli          import konsol
 from speech_recognition import Recognizer, Microphone
+from beepy              import beep
 from gtts               import gTTS
 from playsound          import playsound
 from os                 import system, remove
@@ -28,6 +29,7 @@ def ses2yazi(n_saniye_dinle:int | None) -> str:
 
     with ignore_stderr() as _, Microphone() as source:
         dinleyici.adjust_for_ambient_noise(source)
+        beep()
         konsol.log("[purple][~] Mikrofon Dinleniyor..")
         if n_saniye_dinle:
             veri = dinleyici.record(source, duration=n_saniye_dinle)
