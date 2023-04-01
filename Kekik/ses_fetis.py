@@ -3,6 +3,7 @@
 # * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound pydub
 
 from Kekik.cli          import konsol
+from Typing             import Literal
 from speech_recognition import Recognizer, Microphone, UnknownValueError, WaitTimeoutError, AudioFile
 from beepy              import beep
 from gtts               import gTTS
@@ -76,7 +77,15 @@ def inceses(metin:str, cikti_adi:str) -> str:
 def dosya2yazi(dosya_yolu:str) -> None:
     gecici_dosya = "__temp.wav"
 
-    ses = AudioSegment.from_mp3(dosya_yolu)
+    if dosya_yolu.endswith(".mp3"):
+        ses = AudioSegment.from_mp3(dosya_yolu)
+    elif dosya_yolu.endswith(".wav"):
+        ses = AudioSegment.from_wav(dosya_yolu)
+    elif dosya_yolu.endswith(".ogg"):
+        ses = AudioSegment.from_ogg(dosya_yolu)
+    else:
+        raise ValueError("Lütfen geçerli bir dosya uzantısı giriniz. » .mp3, .wav, .ogg")
+
     ses.export(gecici_dosya, format="wav")
 
     dinleyici = Recognizer()
