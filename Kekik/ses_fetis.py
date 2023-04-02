@@ -1,6 +1,6 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-# * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound pydub
+# * pip3 install -U PyAudio SpeechRecognition beepy gTTS playsound pydub ffmpeg-python
 
 from Kekik.cli          import konsol
 from speech_recognition import Recognizer, Microphone, UnknownValueError, WaitTimeoutError, AudioFile
@@ -9,6 +9,7 @@ from gtts               import gTTS
 from playsound          import playsound
 from os                 import system, remove
 from pydub              import AudioSegment
+import ffmpeg
 
 def ses2yazi(n_saniye_dinle:int | None, bip:bool=True) -> str:
     dinleyici = Recognizer()
@@ -58,7 +59,18 @@ def yazi2ses(metin:str, mp3_adi:str) -> str:
     return f"{mp3_adi}.mp3"
 
 def cevir(girdi_dosya:str, cikti_dosya:str) -> str:
-    system(f'ffmpeg -hide_banner -loglevel error -y -i {girdi_dosya} -af "asetrate=44100*0.9, aresample=44100, atempo=1/1.15" {cikti_dosya}')
+    # system(f'ffmpeg -hide_banner -loglevel error -y -i {girdi_dosya} -af "asetrate=44100*0.9, aresample=44100, atempo=1/1.15" {cikti_dosya}')
+
+    (
+        ffmpeg
+        .input(girdi_dosya, loglevel="error")
+        .filter("asetrate", 44100*0.9)
+        .filter("aresample", 44100)
+        .filter("atempo", 1/1.15)
+        .output(cikti_dosya)
+        .run(overwrite_output=True)
+    )
+
     remove(girdi_dosya)
     return cikti_dosya
 
