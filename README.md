@@ -187,6 +187,17 @@ liste_fetis.n_er_hale_getir(liste, adet=3)
 # [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10]]
 ```
 
+### **[BIST](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/BIST.py)**
+```python
+from Kekik import BIST
+
+print(BIST.marketler)
+# {'XU100': ['AEFES', 'AGHOL', 'AKBNK', 'AKFGY', 'AKSA', 'AKSEN', 'ALARK', 'ALBRK', 'ALFAS', 'ALKIM', 'ARCLK', 'ASELS', 'ASUZU', 'AYDEM', 'BAGFS', 'BASGZ', 'BERA', 'BIMAS', 'BIOEN', 'BRYAT', 'BUCIM', 'CCOLA', 'CEMTS', 'CIMSA', 'DOAS', 'DOHOL', 'ECILC', 'EGEEN', 'EKGYO', 'ENJSA', 'ENKAI', 'ERBOS', 'EREGL', 'EUREN', 'FENER', 'FROTO', 'GARAN', 'GENIL', 'GESAN', 'GLYHO', 'GSDHO', 'GUBRF', 'GWIND', 'HALKB', 'HEKTS', 'IPEKE', 'ISCTR', 'ISDMR', 'ISGYO', 'IZMDC', 'KARSN', 'KCAER', 'KCHOL', 'KERVT', 'KLRHO', 'KMPUR', 'KONTR', 'KONYA', 'KORDS', 'KOZAA', 'KOZAL', 'KRDMD', 'KZBGY', 'MAVI', 'MGROS', 'ODAS', 'OTKAR', 'OYAKC', 'PETKM', 'PGSUS', 'PSGYO', 'SAHOL', 'SASA', 'SELEC', 'SISE', 'SKBNK', 'SMRTG', 'SNGYO', 'SOKM', 'TAVHL', 'TCELL', 'THYAO', 'TKFEN', 'TKNSA', 'TMSN', 'TOASO', 'TSKB', 'TTKOM', 'TTRAK', 'TUKAS', 'TUPRS', 'TURSG', 'ULKER', 'ULUUN', 'VAKBN', 'VESBE', 'VESTL', 'YKBNK', 'YYLGD', 'ZOREN'], 'XU050': ['AEFES', 'AKBNK', 'AKSA', 'AKSEN', 'ALARK', 'ARCLK', 'ASELS', 'BERA', 'BIMAS', 'DOHOL', 'EGEEN', 'EKGYO', 'ENJSA', 'ENKAI', 'EREGL', 'FROTO', 'GARAN', 'GESAN', 'GUBRF', 'HALKB', 'HEKTS', 'ISCTR', 'ISGYO', 'KCHOL', 'KONTR', 'KORDS', 'KOZAA', 'KOZAL', 'KRDMD', 'MGROS', 'ODAS', 'OYAKC', 'PETKM', 'PGSUS', 'SAHOL', 'SASA', 'SISE', 'SMRTG', 'SOKM', 'TAVHL', 'TCELL', 'THYAO', 'TKFEN', 'TOASO', 'TSKB', 'TTKOM', 'TUPRS', 'VAKBN', 'VESTL', 'YKBNK'], 'XU030': ['AKBNK', 'AKSEN', 'ALARK', 'ARCLK', 'ASELS', 'BIMAS', 'EKGYO', 'ENKAI', 'EREGL', 'FROTO', 'GARAN', 'GUBRF', 'HEKTS', 'ISCTR', 'KCHOL', 'KOZAA', 'KOZAL', 'KRDMD', 'ODAS', 'PETKM', 'PGSUS', 'SAHOL', 'SASA', 'SISE', 'TAVHL', 'TCELL', 'THYAO', 'TOASO', 'TUPRS', 'YKBNK']}
+
+print(BIST.sembol_sorgu("VESBE"))
+# {'VESBE': ['XU100']}
+```
+
 ### **[dict2json](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dict2json.py)**
 ### **[dosya_indir](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya_indir.py)**
 ### **[benim_hwid](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/hwid_kontrol.py)**
