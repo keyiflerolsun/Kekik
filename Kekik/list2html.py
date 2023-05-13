@@ -3,8 +3,8 @@
 from tabulate import tabulate
 from typing   import List, Dict
 
-def list2html(title:str, tablo_veri:List[Dict], header:str='', aciklama:str='', footer:str='', pdf_sayfa:str="A4", sayfalama:bool=True) -> str:
-    tablo_html = tabulate(tablo_veri, headers='keys', tablefmt='html')
+def list2html(title:str, tablo_veri:List[Dict], header:str="", aciklama:str="", footer:str="", pdf_sayfa:str="A4", sayfalama:bool=True) -> str:
+    tablo_html = tabulate(tablo_veri, headers="keys", tablefmt="html")
 
     css = """<style>
         th, td {
@@ -13,8 +13,8 @@ def list2html(title:str, tablo_veri:List[Dict], header:str='', aciklama:str='', 
     </style>"""
 
     javascript = """<script>
-            $("table").addClass("table table-bordered table-sm table-hover table-striped");
-            $("thead").addClass("thead-dark");
+            $("table").addClass("table table-dark table-sm table-bordered table-hover table-striped");
+            $("thead").addClass("table-secondary");
             $(document).ready(function() {
                 $("table").DataTable({
                     dom: 'Bfrtip',
@@ -26,7 +26,7 @@ def list2html(title:str, tablo_veri:List[Dict], header:str='', aciklama:str='', 
                         // "info": "_TOTAL_ girişten _START_ - _END_ arası gösteriliyor",
                         "info": "_TOTAL_ Kayıt Mevcut",
                         "infoEmpty": "Kayıt yok",
-                        "infoFiltered": "(_MAX_ toplam kayıttan filtrelenmiştir)",
+                        "infoFiltered": "(Toplam _MAX_ kayıttan filtrelenmiştir)",
                         "search": "Ara:",
                         "paginate": {
                             "first":      "İlk",
@@ -62,28 +62,30 @@ def list2html(title:str, tablo_veri:List[Dict], header:str='', aciklama:str='', 
         </script>""".replace("pageSize:'A4'", f"pageSize:'{pdf_sayfa}'").replace("paging: false", f"paging: {str(sayfalama).lower()}")
 
     return f"""<!doctype html>
-<html lang="tr">
+<html lang="tr" data-bs-theme="dark">
+
 <head>
-    <!-- Gerekli meta tagler -->
+    <!-- ? Meta -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-
-    <!-- Bootstrap CSS - Font Awesome -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@forevolve/bootstrap-dark@2.1.0/dist/css/bootstrap-dark.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
-
-    <!-- DataTables -->
-    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css" rel="stylesheet"/>
-    <link href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css" rel="stylesheet"/>
-
-    <!-- CSS -->
-    {css}
-
-    <!-- Ajax -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <meta http-equiv="Content-Language" content="tr">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>{title}</title>
+    <meta name="keywords"    content="keyiflerolsun, Ömer Faruk Sancak, KekikAkademi, Kekik Akademi">
+    <meta name="author"      content="keyiflerolsun">
+
+    <!-- ? Bootstrap CSS - Font Awesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <!-- ? DataTables -->
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+    <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
+
+    <!-- ? Statik CSS -->
+    {css}
 </head>
+
 <body class="d-flex align-items-center min-vh-100">
     <div class="container">
         <div class="card">
@@ -105,22 +107,41 @@ def list2html(title:str, tablo_veri:List[Dict], header:str='', aciklama:str='', 
         </div>
     </div>
 
-        <!-- jQuery ve Bootstrap Bundle (Popper içerir) -->
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-        <!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script> -->
-        <script src="https://cdn.jsdelivr.net/npm/@forevolve/bootstrap-dark@2.1.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- ? jQuery ve Bootstrap Bundle (Popper içerir) -->
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
-        <!-- DataTables -->
-        <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-        <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+        <!-- ? DataTables -->
+        <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
         <!-- Tablo Düzenle -->
         {javascript}
+
+
+<!-- ! Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+* ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠀⠀⠀⡀⠀⠀⠀
+* ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣷⣤⣾⡇⠀⠀⠀
+* ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣈⡛⣿⡟⠁⢀⣀⠀
+* ⠀⠀⠀⢰⡄⠀⠀⠀⠀⠀⢸⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠻⠿⠾⣷⣾⠿⠃⠀
+* ⠀⠀⠀⠈⣿⣦⡀⠀⠀⠀⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⠀⠀
+* ⠀⠀⠀⠀⣿⣿⣿⣦⡀⠀⣿⣿⣿⣧⡀⠀⠀⠀⠀⢀⣤⣤⣤⣀⡀⠛⠀⠀⠀⠀
+* ⠀⠀⠀⠀⠘⣿⣿⣿⣿⣶⣄⠙⠻⠿⣷⡀⠀⠀⢀⣿⣿⣿⣿⣿⡿⠶⠀⠀⠀⠀
+* ⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣶⣦⣤⣤⣤⣤⣾⣿⣿⡏⠉⠀⣤⠄⠀⠀⠀⠀
+* ⠀⠀⠀⠀⠀⠀⠈⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠉⠀⠀⠀⠀⠀
+* ⠀⠀⠀⠀⠀⠀⠀⠀⠙⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀
+* ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+* ⠀⣼⣷⣶⣶⣶⣶⣶⣾⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+* ⠀⢻⣿⣿⣿⣿⣿⠿⠟⠛⠛⠛⠋⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+* ⠀⠘⢿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+* ⠀⠀⠀⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+! -->
 </body>
 </html>"""

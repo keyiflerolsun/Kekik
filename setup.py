@@ -10,7 +10,7 @@ setup(
     packages     = ["Kekik"],
 
     name         = "Kekik",
-    version      = "1.2.5",
+    version      = "1.2.6",
     url          = "https://github.com/keyiflerolsun/Kekik",
     description  = "İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..",
     keywords     = ["Kekik", "KekikAkademi", "keyiflerolsun"],
@@ -33,6 +33,9 @@ setup(
         "pytz",
         "requests",
         "aiohttp",
+        "httpx",
+        "parsel",
+        "cssselect",
         # "thispersondoesnotexist",
         "simplejson",
         "rich",
