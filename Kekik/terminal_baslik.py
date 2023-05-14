@@ -6,6 +6,7 @@ def terminal_baslik(mesaj:str):
     if os.name == "nt":
         import ctypes
         ctypes.windll.kernel32.SetConsoleTitleW(mesaj)
+        return
 
     if "KONSOLE_VERSION" in os.environ:
         # https://stackoverflow.com/questions/19897787/change-konsole-tab-title-from-command-line-and-make-it-persistent
