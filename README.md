@@ -12,10 +12,12 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/Kekik?logo=pypi&logoColor=white)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/Kekik?logo=pypi&logoColor=white)
 
+[![PyPI Yükle](https://github.com/keyiflerolsun/Kekik/actions/workflows/pypiYukle.yml/badge.svg)](https://github.com/keyiflerolsun/Kekik/actions/workflows/pypiYukle.yml)
+
 *İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..*
 
-[![ForTheBadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
-[![ForTheBadge built-with-love](http://ForTheBadge.com/images/badges/built-with-love.svg)](https://GitHub.com/keyiflerolsun/)
+[![ForTheBadge made-with-python](https://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
+[![ForTheBadge built-with-love](https://ForTheBadge.com/images/badges/built-with-love.svg)](https://GitHub.com/keyiflerolsun/)
 
 ## 🚀 Kurulum
 
@@ -36,6 +38,15 @@ from Kekik import slugify
 print(slugify("Ömer Faruk Sancak"))
 
 # » omer-faruk-sancak
+```
+
+### **[unicode_tr](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/unicode_tr.py)**
+```python
+from Kekik import unicode_tr
+
+print(unicode_tr(u"izmir istanbul").title())
+
+# » İzmir İstanbul
 ```
 
 ### **[link_ayikla](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/link_islemleri.py)**
@@ -214,7 +225,7 @@ print(BIST.sembol_sorgu("VESBE"))
 
 ## 🌐 Telif Hakkı ve Lisans
 
-* *Copyright (C) 2022 by* [keyiflerolsun](https://github.com/keyiflerolsun) ❤️️
+* *Copyright (C) 2023 by* [keyiflerolsun](https://github.com/keyiflerolsun) ❤️️
 * [GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007](https://github.com/keyiflerolsun/Kekik/blob/master/LICENSE) *Koşullarına göre lisanslanmıştır..*
 
 ## ♻️ İletişim

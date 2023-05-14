@@ -2,6 +2,7 @@
 
 ####
 from Kekik.slugify         import slugify
+from Kekik.unicode_tr      import unicode_tr
 from Kekik.link_islemleri  import link_ayikla, youtube_link_mi
 from Kekik.okunabilir_byte import okunabilir_byte
 from Kekik.zaman_donustur  import sure2saniye, zaman_donustur
