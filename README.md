@@ -218,6 +218,7 @@ print(BIST.sembol_sorgu("VESBE"))
 ### **[satir_sil](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/txt_fetis.py)**
 ### **[list2html](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/list2html.py)**
 ### **[mail_gonder](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/mail_gonder.py)**
+### **[terminal_baslik](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/terminal_baslik.py)**
 
 ## 💸 Bağış Yap
 
