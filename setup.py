@@ -6,7 +6,7 @@ from io         import open
 setup(
     # ? Genel Bilgiler
     name         = "Kekik",
-    version      = "1.3.0",
+    version      = "1.3.1",
     url          = "https://github.com/keyiflerolsun/Kekik",
     description  = "İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..",
     keywords     = ["Kekik", "KekikAkademi", "keyiflerolsun"],
@@ -38,11 +38,11 @@ setup(
         "simplejson",
         "rich",
         "tabulate",
-        "tqdm",
-        "qrcode",
-        "pyfiglet",
-        "Pillow",
-        "notify-py",
+        # "tqdm",
+        # "qrcode",
+        # "pyfiglet",
+        # "Pillow",
+        # "notify-py",
         # "py3-validate-email"
     ],
 
