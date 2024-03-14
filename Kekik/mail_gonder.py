@@ -8,7 +8,9 @@ from typing               import Union
 from smtplib              import SMTP
 from email.mime.multipart import MIMEMultipart
 from email.mime.text      import MIMEText
-from email.utils          import formataddr
+from email.utils          import formataddr, formatdate
+from pytz                 import timezone
+from datetime             import datetime
 
 def mail_gonder(
     host:str,
@@ -30,6 +32,8 @@ def mail_gonder(
     mesaj["Subject"] = konu
     mesaj["From"]    = formataddr((gonderen_adi, gonderen_mail))
     mesaj["To"]      = formataddr((alici_adi, alici_mail))
+    # mesaj["Date"]    = formatdate(localtime=True)
+    mesaj["Date"]    = datetime.now(timezone("Europe/Istanbul")).strftime("%a, %d %b %Y %H:%M:%S %z")
 
     mesaj.attach(MIMEText(icerik, "html") if html else MIMEText(icerik, "plain"))
 
