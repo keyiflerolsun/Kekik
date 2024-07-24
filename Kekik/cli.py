@@ -1,12 +1,13 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 #---------------------------------------------------#
-from signal import signal, SIGINT
+from signal import signal, SIGINT, SIGTERM, SIGABRT
 
 def sinyal_yakala(signal, frame):
     cikis_yap()
 
-signal(SIGINT, sinyal_yakala)
+for sinyal in (SIGINT, SIGTERM, SIGABRT):
+    signal(sinyal, sinyal_yakala)
 
 # from warnings import filterwarnings, simplefilter
 # filterwarnings("ignore")
@@ -59,17 +60,26 @@ from pathlib    import Path
 from sys        import exit
 from shutil     import rmtree
 from traceback  import format_exc
+from asyncio    import get_event_loop
 
 def bellek_temizle():
     with suppress(Exception):
         [alt_dizin.unlink() for alt_dizin in Path(".").rglob("*.py[coi]")]
+    with suppress(Exception):
         [alt_dizin.rmdir()  for alt_dizin in Path(".").rglob("__pycache__")]
+    with suppress(Exception):
         [rmtree(alt_dizin)  for alt_dizin in Path(".").rglob("*.build")]
+    with suppress(Exception):
         [alt_dizin.unlink() for alt_dizin in Path(".").rglob("*.bak")]
 
 bellek_temizle()
 
 def cikis_yap(_print=True):
+    loop = get_event_loop()
+    if loop.is_running():
+        loop.stop()
+        loop.close()
+
     if _print:
         konsol.print("\n\n")
         konsol.log("[bold purple]Çıkış Yapıldı..")
