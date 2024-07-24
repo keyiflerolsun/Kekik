@@ -1,16 +1,16 @@
 # <img src="https://www.akashtrehan.com/assets/images/emoji/terminal.png" height="42" align="center"> Kekik
 
-![Repo Boyutu](https://img.shields.io/github/repo-size/keyiflerolsun/Kekik?logo=git&logoColor=white)
-![Görüntülenme](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/keyiflerolsun/Kekik&title=Görüntülenme)
+[![Boyut](https://img.shields.io/github/repo-size/keyiflerolsun/Kekik?logo=git&logoColor=white&label=Boyut)](#)
+[![Görüntülenme](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/keyiflerolsun/Kekik&title=Görüntülenme)](#)
 <a href="https://KekikAkademi.org/Kahve" target="_blank"><img src="https://img.shields.io/badge/☕️-Kahve Ismarla-ffdd00" title="☕️ Kahve Ismarla" style="padding-left:5px;"></a>
 
-![Python Version](https://img.shields.io/pypi/pyversions/Kekik?logo=python&logoColor=white)
-![License](https://img.shields.io/pypi/l/Kekik?logo=gnu&logoColor=white)
-![Status](https://img.shields.io/pypi/status/Kekik?logo=windowsterminal&logoColor=white)
+[![PyPI](https://img.shields.io/pypi/v/Kekik?logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/Kekik)
+[![PyPI - Yüklenme](https://img.shields.io/pypi/dm/Kekik?logo=pypi&logoColor=white&label=Yüklenme)](https://pypi.org/project/Kekik)
+[![PyPI - Wheel](https://img.shields.io/pypi/wheel/Kekik?logo=pypi&logoColor=white&label=Wheel)](https://pypi.org/project/Kekik)
 
-![PyPI](https://img.shields.io/pypi/v/Kekik?logo=pypi&logoColor=white)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/Kekik?logo=pypi&logoColor=white)
-![PyPI - Wheel](https://img.shields.io/pypi/wheel/Kekik?logo=pypi&logoColor=white)
+[![Python Version](https://img.shields.io/pypi/pyversions/Kekik?logo=python&logoColor=white&label=Python)](#)
+[![Lisans](https://img.shields.io/pypi/l/Kekik?logo=gnu&logoColor=white&label=Lisans)](#)
+[![Durum](https://img.shields.io/pypi/status/Kekik?logo=windowsterminal&logoColor=white&label=Durum)](#)
 
 [![PyPI Yükle](https://github.com/keyiflerolsun/Kekik/actions/workflows/pypiYukle.yml/badge.svg)](https://github.com/keyiflerolsun/Kekik/actions/workflows/pypiYukle.yml)
 
