@@ -23,7 +23,7 @@ for sinyal in (SIGINT, SIGTERM, SIGABRT):
 
 from rich import pretty, traceback
 pretty.install()
-traceback.install(width=None, show_locals=False)
+traceback.install(show_locals=False)
 
 from rich.console import Console
 
