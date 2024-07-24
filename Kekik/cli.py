@@ -57,7 +57,6 @@ def hata_salla(hata:Exception) -> None:
 #---------------------------------------------------#
 from contextlib import suppress
 from pathlib    import Path
-from sys        import exit
 from shutil     import rmtree
 from traceback  import format_exc
 from asyncio    import get_event_loop
@@ -77,14 +76,19 @@ bellek_temizle()
 def cikis_yap(_print=True):
     loop = get_event_loop()
     if loop.is_running():
-        loop.stop()
-        loop.close()
+        with suppress(RuntimeError):
+            loop.stop()
+        with suppress(RuntimeError):
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        with suppress(RuntimeError):
+            loop.close()
 
     if _print:
         konsol.print("\n\n")
         konsol.log("[bold purple]Çıkış Yapıldı..")
+
     bellek_temizle()
-    exit()
+    os._exit(0)
 
 def hata_yakala(hata:Exception):
     if (hata in {KeyboardInterrupt, SystemExit, EOFError, RuntimeError}) or (str(hata).startswith(("'coroutine' object is not iterable", "'KekikT"))):
