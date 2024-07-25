@@ -22,18 +22,17 @@ for sinyal in (SIGINT, SIGTERM, SIGABRT):
 #---------------------------------------------------#
 
 from rich import pretty, traceback
+
 pretty.install()
-traceback.install(
-    width              = None,
-    locals_max_length  = None,
-    locals_max_string  = None,
-    max_frames         = None,
-    show_locals        = False
-)
+traceback.install(show_locals=False)
 
 from rich.console import Console
 
 konsol = Console(log_path=False)
+
+from os import environ
+
+environ["COLUMNS"] = 200
 
 #---------------------------------------------------#
 import os, platform
