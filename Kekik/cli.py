@@ -30,7 +30,7 @@ from rich.console import Console
 
 konsol = Console(
     log_path = False,
-    _environ = {"COLUMNS": "100"}
+    _environ = {"COLUMNS": "112"}
 )
 
 #---------------------------------------------------#
