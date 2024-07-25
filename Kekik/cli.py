@@ -32,7 +32,7 @@ konsol = Console(log_path=False)
 
 from os import environ
 
-environ["COLUMNS"] = 200
+environ["COLUMNS"] = "200"
 
 #---------------------------------------------------#
 import os, platform
