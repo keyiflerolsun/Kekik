@@ -28,11 +28,10 @@ traceback.install(show_locals=False)
 
 from rich.console import Console
 
-konsol = Console(log_path=False)
-
-from os import environ
-
-environ["COLUMNS"] = "125"
+konsol = Console(
+    log_path = False,
+    _environ = {"COLUMNS": "100"}
+)
 
 #---------------------------------------------------#
 import os, platform
