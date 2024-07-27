@@ -17,7 +17,7 @@ def qr_ver(veri, png:bool=False, favicon:str=None, txt:bool=False) -> str:
 
     if png:
         img = qr.make_image(image_factory=StyledPilImage, module_drawer=VerticalBarsDrawer(), embeded_image_path=favicon)
-        img.save('qr.png')
+        img.save("qr.png")
 
     if txt:
         with open("qr.txt", "w+", encoding="utf-8") as dosya:

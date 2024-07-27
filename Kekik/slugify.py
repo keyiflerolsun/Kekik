@@ -10,8 +10,8 @@ def slugify(deger:str, unicode_izin=False) -> str:
     Ayrıca baştaki ve sondaki beyaz boşlukları, tireleri ve alt çizgileri de çıkarır.
     """
     if unicode_izin:
-        deger = unicodedata.normalize('NFKC', deger)
+        deger = unicodedata.normalize("NFKC", deger)
     else:
-        deger = unicodedata.normalize('NFKD', deger).encode('ascii', 'ignore').decode('ascii')
-    deger = re.sub(r'[^\w\s-]', '', deger.lower())
-    return re.sub(r'[-\s]+', '-', deger).strip('-_')
+        deger = unicodedata.normalize("NFKD", deger).encode("ascii", "ignore").decode("ascii")
+    deger = re.sub(r"[^\w\s-]", "", deger.lower())
+    return re.sub(r"[-\s]+", "-", deger).strip("-_")

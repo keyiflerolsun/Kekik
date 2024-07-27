@@ -22,16 +22,16 @@ class unicode_tr(__instance__):
         for key, value in self.CHARMAP.get("to_lower").items():
             self = self.replace(key, value)
 
-        return unicode_tr(getattr(__instance__, 'lower')(self))
+        return unicode_tr(getattr(__instance__, "lower")(self))
 
     def upper(self):
         for key, value in self.CHARMAP.get("to_upper").items():
             self = self.replace(key, value)
 
-        return unicode_tr(getattr(__instance__, 'upper')(self))
+        return unicode_tr(getattr(__instance__, "upper")(self))
 
     def replace(self, *args, **kwargs):
-        return unicode_tr(getattr(__instance__, 'replace')(self, args[0], args[1]))
+        return unicode_tr(getattr(__instance__, "replace")(self, args[0], args[1]))
 
     def capitalize(self):
         first, rest = self[0], self[1:]

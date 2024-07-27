@@ -10,8 +10,8 @@ def str2uuid(metin) -> str:
 
 def benim_hwid() -> str:
     # HWID Yakala
-    if sistem == 'nt':
-        benim_hwid = str2uuid(check_output('wmic csproduct get uuid').decode().split('\n')[1])
+    if sistem == "nt":
+        benim_hwid = str2uuid(check_output("wmic csproduct get uuid").decode().split("\n")[1])
     else:
         try:
             from GPUtil import getGPUs
@@ -25,7 +25,7 @@ def benim_hwid() -> str:
             benim_hwid = str2uuid(ekran_kartlari[0].uuid[4:])
         else:
             try:
-                benim_hwid = str2uuid(check_output(['cat', '/var/lib/dbus/machine-id'], stderr=STDOUT).decode())
+                benim_hwid = str2uuid(check_output(["cat", "/var/lib/dbus/machine-id"], stderr=STDOUT).decode())
             except Exception:
                 benim_hwid = str2uuid(check_output("lscpu").decode() + check_output(["uname", "-a"]).decode())
 

@@ -8,12 +8,12 @@ from tqdm         import tqdm
 def indirilebilir_mi(url:str) -> bool:
     istek  = head(url, allow_redirects=True)
     header = istek.headers
-    content_type = header.get('content-type')
+    content_type = header.get("content-type")
 
-    if 'text' in content_type.lower():
+    if "text" in content_type.lower():
         return False
 
-    return 'html' not in content_type.lower()
+    return "html" not in content_type.lower()
 
 def dosya_indir(url:str, dosya_adi:str=None) -> Optional[str]:
     kontrol = indirilebilir_mi(url)
@@ -28,11 +28,11 @@ def dosya_indir(url:str, dosya_adi:str=None) -> Optional[str]:
         dosya_adi = f"{dosya_adi}.{uzanti}"
 
     istek = get(url, stream=True)
-    dosya_boyutu = int(istek.headers.get('content-length', 0))
+    dosya_boyutu = int(istek.headers.get("content-length", 0))
 
-    bar_format   = '{l_bar} [{rate_fmt}] | {bar}| [{n_fmt}B / {total_fmt}B] » [{elapsed} / {remaining}]'
-    progress_bar = tqdm(desc=dosya_adi, total=dosya_boyutu, unit='B', unit_scale=True, bar_format=bar_format)
-    with open(dosya_adi, 'wb') as dosya:
+    bar_format   = "{l_bar} [{rate_fmt}] | {bar}| [{n_fmt}B / {total_fmt}B] » [{elapsed} / {remaining}]"
+    progress_bar = tqdm(desc=dosya_adi, total=dosya_boyutu, unit="B", unit_scale=True, bar_format=bar_format)
+    with open(dosya_adi, "wb") as dosya:
         for veri in istek.iter_content(1024): # 1KB
             progress_bar.update(len(veri))
             dosya.write(veri)
