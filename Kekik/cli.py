@@ -78,14 +78,16 @@ def bellek_temizle():
 bellek_temizle()
 
 def cikis_yap(_print=True):
-    loop = get_event_loop()
-    if loop.is_running():
-        with suppress(RuntimeError):
-            loop.stop()
-        with suppress(RuntimeError):
-            loop.run_until_complete(loop.shutdown_asyncgens())
-        with suppress(RuntimeError):
-            loop.close()
+    with suppress(RuntimeError):
+        loop = get_event_loop()
+    with suppress(RuntimeError, UnboundLocalError):
+        if loop.is_running():
+            with suppress(RuntimeError):
+                loop.stop()
+            with suppress(RuntimeError):
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            with suppress(RuntimeError):
+                loop.close()
 
     if _print:
         konsol.print("\n\n")
