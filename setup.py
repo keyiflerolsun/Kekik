@@ -46,6 +46,13 @@ setup(
         # "py3-validate-email"
     ],
 
+    # ? Konsoldan Çalıştırılabilir
+    entry_points = {
+        "console_scripts": [
+            "domain2ip = Kekik.Domain2IP:domain_sorgu",
+        ]
+    },
+
     # ? PyPI Bilgileri
     long_description_content_type = "text/markdown",
     long_description              = "".join(open("README.md", encoding="utf-8").readlines()),

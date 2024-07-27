@@ -1,4 +1,5 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+# ! https://github.com/Eralde/keenetic-dark-theme-extension/blob/master/app/scripts/uiExtension/routesToolbar/routes-tools.service.js
 
 from Kekik.cli import konsol
 from httpx     import Client, HTTPError
@@ -16,7 +17,7 @@ class Domain2IP:
             domain = self.domain
 
         try:
-            url = f"{self.CORS_PROXY_URL}/{self.CF_DOH_URL}?name={domain}&type={sorgu_turu}"
+            url   = f"{self.CORS_PROXY_URL}/{self.CF_DOH_URL}?name={domain}&type={sorgu_turu}"
             yanit = self.oturum.get(url)
             yanit.raise_for_status()
 
@@ -117,3 +118,17 @@ class Domain2IP:
             "ipler"     : tum_ipler or None,
             "subnetler" : subnetler or None,
         }
+
+from sys import argv
+
+def domain_sorgu():
+    print()
+
+    if len(argv) != 2:
+        konsol.print("[bold yellow2][!] Lütfen Domain Girin..")
+        konsol.print("\n[turquoise2]Örn.: [pale_green1]Domain2IP keyiflerolsun.dev\n")
+        return
+
+    konsol.print(Domain2IP(argv[1]).bilgi)
+
+    print()
