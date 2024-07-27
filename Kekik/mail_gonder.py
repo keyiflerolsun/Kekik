@@ -4,15 +4,16 @@
 # from logging              import getLogger
 # getLogger("validate_email").setLevel("ERROR")
 
-from typing               import Union
-from smtplib              import SMTP
-from email.mime.multipart import MIMEMultipart
-from email.mime.text      import MIMEText
-from email.utils          import formataddr, formatdate, make_msgid
-from pytz                 import timezone
-from datetime             import datetime
+from typing                 import Union
+from smtplib                import SMTP
+from email.mime.multipart   import MIMEMultipart
+from email.mime.text        import MIMEText
+from email.mime.application import MIMEApplication
+from email.utils            import formataddr, formatdate, make_msgid
+from pytz                   import timezone
+from datetime               import datetime
 
-def mail_gonder(
+async def mail_gonder(
     host:str,
     port:Union[int, str],
     kullanici:str,
@@ -22,8 +23,9 @@ def mail_gonder(
     alici_adi:str,
     alici_mail:str,
     konu:str,
-    icerik:str,
-    html:bool=False
+    icerik:str="",
+    html:bool=False,
+    dosya_yolu:str=None
 ) -> bool:
     # if not validate_email(alici_mail):
     #     return False
@@ -37,6 +39,12 @@ def mail_gonder(
     mesaj["Date"]       = datetime.now(timezone("Europe/Istanbul")).strftime("%a, %d %b %Y %H:%M:%S %z")
 
     mesaj.attach(MIMEText(icerik, "html") if html else MIMEText(icerik, "plain"))
+
+    if dosya_yolu:
+        with open(dosya_yolu, "rb") as dosya:
+            part = MIMEApplication(dosya.read(), Name=dosya_yolu)
+            part["Content-Disposition"] = f'attachment; filename="{dosya_yolu}"'
+            mesaj.attach(part)
 
     smtp = SMTP(host, int(port))
     smtp.ehlo()
