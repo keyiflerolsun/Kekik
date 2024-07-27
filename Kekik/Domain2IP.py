@@ -38,16 +38,25 @@ class Domain2IP:
         return self._dns_sorgula(domain, "CNAME")
 
     def tum_ip_adresleri(self):
-        a_kayitlari  = self.a_kayitlari()
-        ip_adresleri = [kayit["data"] for kayit in a_kayitlari]
+        ip_adresleri         = set()
+        sorgulanan_domainler = set()
 
-        cname_kayitlari = self.cname_kayitlari()
-        for cname_kayit in cname_kayitlari:
-            cname_domain = cname_kayit["data"]
-            cname_ipler  = self.a_kayitlari(cname_domain)
-            ip_adresleri.extend([kayit["data"] for kayit in cname_ipler])
+        def ipleri_ekle(kayitlar):
+            for kayit in kayitlar:
+                kayit_tipi   = kayit.get("type")
+                kayit_verisi = kayit.get("data")
+                match kayit_tipi:
+                    case 1:  # A kaydı
+                        ip_adresleri.add(kayit_verisi)
+                    case 5:  # CNAME kaydı
+                        alt_domain = kayit_verisi.rstrip(".")
+                        if alt_domain not in sorgulanan_domainler:
+                            sorgulanan_domainler.add(alt_domain)
+                            ipleri_ekle(self.a_kayitlari(alt_domain))
 
-        return sorted(list(set(ip_adresleri)))
+        ipleri_ekle(self.a_kayitlari())
+        ipleri_ekle(self.cname_kayitlari())
+        return sorted(list(ip_adresleri))
 
     def ip_to_binary(self, ip_str):
         return "".join([f"{int(octet):08b}" for octet in ip_str.split(".")])
