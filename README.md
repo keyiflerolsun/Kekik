@@ -209,6 +209,15 @@ print(BIST.sembol_sorgu("VESBE"))
 # {'VESBE': ['XU100']}
 ```
 
+### **[Domain2IP](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/Domain2IP.py)**
+```python
+from Kekik import Domain2IP
+
+dm2ip = Domain2IP("soundcloud.com")
+konsol.print(dm2ip.bilgi)
+# {'domain': 'soundcloud.com', 'ipler': ['18.238.243.19', '18.238.243.27', '18.238.243.62', '18.238.243.79'], 'subnetler': ['18.238.243.0/25']}
+```
+
 ### **[dict2json](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dict2json.py)**
 ### **[dosya_indir](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya_indir.py)**
 ### **[benim_hwid](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/hwid_kontrol.py)**

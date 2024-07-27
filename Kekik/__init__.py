@@ -20,4 +20,5 @@ from Kekik.proxy_ver       import proxy_ver
 # from Kekik.kisi_ver        import kisi_ver
 from Kekik.Nesne           import Nesne
 from Kekik.terminal_baslik import terminal_baslik
+from Kekik.Domain2IP       import Domain2IP
 ####
