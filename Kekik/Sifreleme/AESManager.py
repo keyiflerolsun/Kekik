@@ -73,9 +73,8 @@ class AESManager:
 #   });
 # '''
 
-# be_player      = search(r"bePlayer\('([^']+)',\s*'(\{[^\}]+\})'\);", veri).groups()
+# be_player      = re.search(r"bePlayer\('([^']+)',\s*'(\{[^\}]+\})'\);", veri).groups()
 # be_player_pass = be_player[0]
 # be_player_data = be_player[1]
 
-# encrypted = AESManager.decrypt(be_player_data, be_player_pass).replace("\\", "")
-# print(json.loads(encrypted))
+# print(json.loads(AESManager.decrypt(be_player_data, be_player_pass).replace("\\", "")))

@@ -95,5 +95,4 @@ class CryptoJS:
 # cryptData = re.search(r"CryptoJS\.AES\.decrypt\(\"(.*)\",\"", veri).group(1)
 # cryptPass = re.search(r"\",\"(.*)\"\);", veri).group(1)
 
-# decrypted = CryptoJS.decrypt(cryptPass, cryptData)
-# print(decrypted)
+# print(CryptoJS.decrypt(cryptPass, cryptData))
