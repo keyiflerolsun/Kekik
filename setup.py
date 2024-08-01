@@ -6,7 +6,7 @@ from io         import open
 setup(
     # ? Genel Bilgiler
     name         = "Kekik",
-    version      = "1.4.9",
+    version      = "1.5.0",
     url          = "https://github.com/keyiflerolsun/Kekik",
     description  = "İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane..",
     keywords     = ["Kekik", "KekikAkademi", "keyiflerolsun"],
@@ -44,6 +44,7 @@ setup(
         # "Pillow",
         # "notify-py",
         # "py3-validate-email"
+        "pycryptodome"
     ],
 
     # ? Konsoldan Çalıştırılabilir
