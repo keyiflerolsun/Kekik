@@ -6,8 +6,8 @@ import hashlib, base64
 
 class CryptoJS:
     """
-    AES-256 encryption and decryption with key derivation from a password using a KDF (Key Derivation Function).
-    Conforms to CryptoJS AES method.
+    Paroladan türetilmiş anahtar ile AES/CBC/PKCS7Padding şifreleme ve şifre çözme işlemleri için bir sınıf.
+    CryptoJS AES yöntemine uygundur.
     ! » https://gist.github.com/thackerronak/554c985c3001b16810af5fc0eb5c358f
     """
     KEY_SIZE    = 32
@@ -19,6 +19,7 @@ class CryptoJS:
 
     @staticmethod
     def evp_kdf(password, salt, key_size=32, iv_size=16, iterations=1, hash_algorithm="md5"):
+        """Paroladan Anahtar ve IV oluşturmak için bir KDF fonksiyonu."""
         target_key_size = key_size + iv_size
         derived_bytes   = b""
         block           = None
@@ -41,6 +42,7 @@ class CryptoJS:
 
     @staticmethod
     def encrypt(password, plain_text):
+        """Verilen metni AES/CBC/PKCS7Padding şifreleme yöntemi ile şifreler."""
         salt    = CryptoJS.generate_salt(8)
         key, iv = CryptoJS.evp_kdf(password.encode("utf-8"), salt, key_size=CryptoJS.KEY_SIZE, iv_size=CryptoJS.IV_SIZE)
 
@@ -54,6 +56,7 @@ class CryptoJS:
 
     @staticmethod
     def decrypt(password, cipher_text):
+        """Verilen şifreli metni AES/CBC/PKCS7Padding şifreleme yöntemi ile çözer."""
         ct_bytes          = base64.b64decode(cipher_text)
         salt              = ct_bytes[8:16]
         cipher_text_bytes = ct_bytes[16:]
@@ -67,6 +70,7 @@ class CryptoJS:
 
     @staticmethod
     def _pad(s):
+        """Veriyi AES blok boyutuna göre doldurur (PKCS7)."""
         block_size = AES.block_size
         padding    = block_size - len(s) % block_size
 
@@ -74,8 +78,10 @@ class CryptoJS:
 
     @staticmethod
     def _unpad(s):
+        """Dolguyu kaldırır (PKCS7)."""
         return s[:-ord(s[-1:])]
 
     @staticmethod
     def generate_salt(length):
+        """Belirtilen uzunlukta rastgele bir tuz oluşturur."""
         return get_random_bytes(length)
