@@ -48,19 +48,3 @@ class NaysHash:
         return self.generate_hash_with_hmac256(
             f"{endpoint}{dumps(payload, ensure_ascii=False, sort_keys=False)}{timestamp}".replace(" ", "")
         )
-
-
-
-# print(NaysHash().generate_xtoken(
-#     timestamp = 1695076755128,
-#     endpoint  = "/customer-citizen-info-v3",
-#     payload   = {
-#         "birthDay"              : 31,
-#         "birthMonth"            : 1,
-#         "birthYear"             : 1990,
-#         "citizenId"             : "11111111111",
-#         "customerName"          : "merhaba",
-#         "customerSurname"       : "dünya",
-#         "explicitConsentSigned" : True
-#     },
-# ))

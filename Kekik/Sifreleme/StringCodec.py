@@ -38,21 +38,3 @@ class StringCodec:
     def encode(plain_text: str) -> str:
         """Önce Base64 kodlar, ardından ROT13 uygular."""
         return StringCodec.rtt(StringCodec.btoa(plain_text))
-
-
-
-# veri = r'''
-# var scx = {"fastly":{"tt":"RmFzdGx5","sx":{"p":[],"t":["nUE0pUZ6Yl92nJEgo3u5YzAioF9zoP92ZKtjMGMuAGRlBN=="]},"order":4}};
-# '''
-
-# scx_data = json.loads(re.findall(r'scx = (.*?);', veri)[0])
-
-# link_list = []
-# for key in list(scx_data.keys()):
-#     t = scx_data[key]["sx"]["t"]
-#     if isinstance(t, list):
-#         link_list.append({key: StringCodec.decode(elem) for elem in t})
-#     if isinstance(t, dict):
-#         link_list.append({k: StringCodec.decode(v) for k, v in t.items()})
-
-# print(link_list)
