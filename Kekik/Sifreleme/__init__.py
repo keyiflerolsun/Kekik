@@ -5,3 +5,4 @@ from .AESManager  import AESManager
 from .Packer      import Packer
 from .CryptoJS    import CryptoJS
 from .HexCodec    import HexCodec
+from .NaysHash    import NaysHash
