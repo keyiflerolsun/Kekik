@@ -83,9 +83,9 @@ def cikis_yap(_print=True):
     with suppress(RuntimeError, UnboundLocalError):
         if loop.is_running():
             with suppress(RuntimeError):
-                loop.stop()
-            with suppress(RuntimeError):
                 loop.run_until_complete(loop.shutdown_asyncgens())
+            with suppress(RuntimeError):
+                loop.stop()
             with suppress(RuntimeError):
                 loop.close()
 
