@@ -1,5 +1,3 @@
-# ! Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
-
 class HexCodec:
     @staticmethod
     def encode(utf8_string: str) -> str:
@@ -13,7 +11,7 @@ class HexCodec:
     @staticmethod
     def decode(escaped_hex: str) -> str:
         """Kaçış dizileri içeren bir hex stringini UTF-8 formatındaki stringe dönüştürür."""
-        hex_string = escaped_hex.replace("\\x", "")
+        hex_string = escaped_hex.replace("\\x", "").replace("\\X", "")
         byte_data  = bytes.fromhex(hex_string)
 
         return byte_data.decode("utf-8")
