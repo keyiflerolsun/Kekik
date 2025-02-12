@@ -1,8 +1,10 @@
 # ! https://github.com/Fatal1ty/aiocached
 
 import asyncio
-from functools import wraps
-from time      import time
+from functools    import wraps
+from time         import time
+from hashlib      import md5
+from urllib.parse import urlencode
 
 UNLIMITED = None
 
@@ -110,28 +112,53 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
 
     return result
 
-def make_cache_key(args, kwargs):
-    """Fonksiyon argümanlarından cache için kullanılacak key’i oluşturur."""
-    return (args, tuple(sorted(kwargs.items())))
+async def make_cache_key(args, kwargs, is_fastapi=False):
+    """
+    Cache key'ini oluşturur.
+    
+    :param is_fastapi (bool): Eğer True ise, ilk argümanın bir FastAPI Request nesnesi olduğu varsayılır.
+        Bu durumda, cache key, request nesnesinin URL yolunu (request.url.path) ve 
+        isteğe ait verilerden (GET istekleri için query parametreleri; diğer istekler için JSON veya form verileri)
+        elde edilen verinin URL uyumlu halinin md5 hash'inin birleşiminden oluşturulur.
+        Böylece, aynı URL ve aynı istek verileri için her seferinde aynı cache key üretilecektir.
+        Eğer False ise, cache key args ve kwargs değerlerinden, sıralı bir tuple olarak oluşturulur.
+    """
+    if not is_fastapi:
+        return (args, tuple(sorted(kwargs.items())))
+
+    request = args[0] if args else kwargs.get("request")
+
+    if request.method == "GET":
+        veri = dict(request.query_params) if request.query_params else None
+    else:
+        try:
+            veri = await request.json()
+        except Exception:
+            form_data = await request.form()
+            veri = dict(form_data.items())
+
+    args_hash = md5(urlencode(veri).encode()).hexdigest() if veri else ""
+    return f"{request.url.path}?{args_hash}"
 
 
-def kekik_cache(ttl=UNLIMITED, unless=None):
+def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
     """
     Bir fonksiyon veya coroutine'in sonucunu cache'ler.
     
     :param ttl: Cache’in geçerlilik süresi (saniye). UNLIMITED ise süresizdir.
     :param unless: Fonksiyonun sonucunu argüman olarak alan bir callable. 
                    Eğer True dönerse, sonuç cache'e alınmaz.
-    
+    :param is_fastapi: Eğer True ise, cache key'i oluştururken FastAPI request nesnesine özel şekilde davranır.
+
     Örnek kullanım:
     
         @kekik_cache(ttl=15, unless=lambda res: res is None)
-        async def my_func(param):
+        async def bakalim(param):
             ...
     """
     # Parametresiz kullanıldığında
     if callable(ttl):
-        return kekik_cache(UNLIMITED, unless=unless)(ttl)
+        return kekik_cache(UNLIMITED, unless=unless, is_fastapi=is_fastapi)(ttl)
 
     def decorator(func):
         func.__cache = AsyncCache(ttl)
@@ -139,7 +166,7 @@ def kekik_cache(ttl=UNLIMITED, unless=None):
         if asyncio.iscoroutinefunction(func):
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
-                key = make_cache_key(args, kwargs)
+                key = await make_cache_key(args, kwargs, is_fastapi)
 
                 try:
                     return await func.__cache.get(key)
@@ -150,7 +177,7 @@ def kekik_cache(ttl=UNLIMITED, unless=None):
         else:
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
-                key = make_cache_key(args, kwargs)
+                key = (args, tuple(sorted(kwargs.items())))
 
                 try:
                     return func.__cache[key]
