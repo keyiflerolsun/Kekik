@@ -89,28 +89,37 @@ def _sync_maybe_cache(func, key, result, unless):
 
 async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
     """
-    Asenkron fonksiyon sonucu hesaplandıktan sonra, sonucu cache’e ekler.
-    Eğer `unless` koşulu sağlanıyorsa cache kaydı atlanır.
+    Asenkron fonksiyon sonucunu hesaplar ve cache'e ekler.
+    Aynı key için işlem devam ediyorsa, mevcut sonucu bekler.
+    Sonuç, unless(result) True değilse cache'e eklenir.
     """
-    cache              = func.__cache
+    # __cache'den cache nesnesini alıyoruz.
+    cache = func.__cache
+
+    # Aynı key için aktif bir future varsa, onun sonucunu döndür.
+    if key in cache.futures:
+        return await cache.futures[key]
+
+    # Yeni future oluşturuluyor ve cache.futures'e ekleniyor.
     future             = asyncio.Future()
     cache.futures[key] = future
 
     try:
+        # Asenkron fonksiyonu çalıştır ve sonucu elde et.
         result = await func(*args, **kwargs)
+        future.set_result(result)
+        
+        # unless koşuluna göre cache'e ekleme yap.
+        if unless is None or not unless(result):
+            await cache.set(key, result)
+        
+        return result
     except Exception as exc:
-        cache.futures.pop(key, None)
         future.cancel()
         raise exc
-
-    future.set_result(result)
-
-    if unless is None or not unless(result):
-        cache[key] = result
-    else:
+    finally:
+        # İşlem tamamlandığında future'ı temizle.
         cache.futures.pop(key, None)
-
-    return result
 
 async def make_cache_key(args, kwargs, is_fastapi=False):
     """
