@@ -132,7 +132,7 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
         
         # unless koşuluna göre cache'e ekleme yap.
         if unless is None or not unless(result):
-            await cache.set(key, result)
+            cache[key] = result
         
         return result
     except Exception as exc:
