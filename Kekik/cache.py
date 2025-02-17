@@ -11,7 +11,7 @@ UNLIMITED = None
 class Cache:
     """
     Basit in-memory cache yapısı.
-    TTL (time-to-live) süresi dolan veriler otomatik olarak temizlenir.
+    TTL (time-to-live) süresi dolan veriler otomatik olarak temizlenir (get/erişim anında kontrol edilir).
     """
     def __init__(self, ttl=UNLIMITED):
         self._data  = {}
@@ -49,10 +49,33 @@ class AsyncCache(Cache):
     """
     Asenkron işlemleri destekleyen cache yapısı.
     Aynı key için gelen eşzamanlı çağrılar, futures kullanılarak tek sonuç üzerinden paylaşılır.
+    Ek olarak, belirli aralıklarla cache’i kontrol edip, süresi dolmuş verileri temizleyen otomatik temizleme görevi çalışır.
     """
-    def __init__(self, ttl=UNLIMITED):
+    def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60):
+        """
+        :param ttl: Her entry için geçerli süre (saniye). Örneğin 3600 saniye 1 saattir.
+        :param cleanup_interval: Otomatik temizleme görevinin kaç saniyede bir çalışacağını belirler.
+        """
         super().__init__(ttl)
         self.futures = {}
+
+        if ttl is not UNLIMITED:
+            # TTL geçerli bir sayı olduğunda cleanup interval, ttl ile cleanup_interval'ın max'ı olarak ayarlanır.
+            self._cleanup_interval = max(ttl, cleanup_interval)
+        else:
+            # TTL tanımsız (UNLIMITED) ise cleanup_interval doğrudan kullanılır.
+            self._cleanup_interval = cleanup_interval
+
+        self._cleanup_task = asyncio.create_task(self._auto_cleanup())
+
+    async def _auto_cleanup(self):
+        """Belirlenen aralıklarla cache içerisindeki süresi dolmuş entry'leri temizler."""
+        while True:
+            await asyncio.sleep(self._cleanup_interval)
+            # _data kopyasını almak, üzerinde dönüp silme yaparken hata almamak için.
+            keys = list(self._data.keys())
+            for key in keys:
+                self.remove_if_expired(key)
 
     async def get(self, key):
         """
