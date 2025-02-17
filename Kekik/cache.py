@@ -59,14 +59,12 @@ class AsyncCache(Cache):
         super().__init__(ttl)
         self.futures = {}
 
-        if ttl is not UNLIMITED:
-            # TTL geçerli bir sayı olduğunda cleanup interval, ttl ile cleanup_interval'ın max'ı olarak ayarlanır.
-            self._cleanup_interval = max(ttl, cleanup_interval)
-        else:
-            # TTL tanımsız (UNLIMITED) ise cleanup_interval doğrudan kullanılır.
-            self._cleanup_interval = cleanup_interval
-
-        self._cleanup_task = asyncio.create_task(self._auto_cleanup())
+        self._cleanup_interval = max(ttl, cleanup_interval) if ttl is not UNLIMITED else cleanup_interval
+        # Aktif bir event loop varsa otomatik temizlik görevini başlatıyoruz.
+        try:
+            self._cleanup_task = asyncio.get_running_loop().create_task(self._auto_cleanup())
+        except RuntimeError:
+            self._cleanup_task = None
 
     async def _auto_cleanup(self):
         """Belirlenen aralıklarla cache içerisindeki süresi dolmuş entry'leri temizler."""
