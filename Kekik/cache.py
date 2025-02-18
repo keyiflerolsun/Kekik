@@ -174,17 +174,28 @@ async def make_cache_key(args, kwargs, is_fastapi=False):
 def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
     """
     Bir fonksiyon veya coroutine'in sonucunu cache'ler.
-    
-    :param ttl: Cache’in geçerlilik süresi (saniye). UNLIMITED ise süresizdir.
-    :param unless: Fonksiyonun sonucunu argüman olarak alan bir callable. 
-                   Eğer True dönerse, sonuç cache'e alınmaz.
-    :param is_fastapi: Eğer True ise, cache key'i oluştururken FastAPI request nesnesine özel şekilde davranır.
 
-    Örnek kullanım:
+    Args:
+        ttl (int, optional): Cache’in geçerlilik süresi (saniye). 
+                                       Eğer `UNLIMITED` ise süresizdir. Varsayılan olarak `UNLIMITED`'dir.
+        unless (callable, optional): Fonksiyonun sonucunu argüman olarak alan bir callable. 
+                                               Eğer `True` dönerse, sonuç cache'e alınmaz. Varsayılan olarak `None`'dır.
+        is_fastapi (bool, optional): Eğer `True` ise, cache key'i oluştururken FastAPI request nesnesine özel şekilde davranır.
+                                     Varsayılan olarak `False`'tır.
+
+    Notlar:
+    -------
+    Normalde yalnızca Redis cache kullanılmak istenir.
+    Ancak Redis'e ulaşılamayan durumlarda RAM fallback kullanılır.
+
+    ---
+
+    Örn.:
     
-        @kekik_cache(ttl=15, unless=lambda res: res is None)
+        @kekik_cache(ttl=15, unless=lambda sonuc: bool(sonuc is None))
         async def bakalim(param):
-            ...
+            # Burada cache işlemi yapılır.
+            return param
     """
     # Parametresiz kullanıldığında
     if callable(ttl):
