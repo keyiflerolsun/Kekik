@@ -202,11 +202,13 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
         return kekik_cache(UNLIMITED, unless=unless, is_fastapi=is_fastapi)(ttl)
 
     def decorator(func):
-        func.__cache = AsyncCache(ttl)
-
         if asyncio.iscoroutinefunction(func):
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
+                # Lazy initialization: İlk çağrıda cache oluşturuluyor
+                if not hasattr(func, "__cache"):
+                    func.__cache = AsyncCache(ttl)
+
                 key = await make_cache_key(args, kwargs, is_fastapi)
 
                 try:
@@ -218,6 +220,10 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
         else:
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
+                # Lazy initialization: İlk çağrıda cache oluşturuluyor
+                if not hasattr(func, "__cache"):
+                    func.__cache = AsyncCache(ttl)
+
                 key = (args, tuple(sorted(kwargs.items())))
 
                 try:
