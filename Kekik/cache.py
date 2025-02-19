@@ -75,11 +75,20 @@ class AsyncCache(Cache):
             for key in keys:
                 self.remove_if_expired(key)
 
+    def ensure_cleanup_task(self):
+        """Event loop mevcutsa, cleanup task henüz başlatılmadıysa oluştur."""
+        if self._cleanup_task is None:
+            try:
+                self._cleanup_task = asyncio.get_running_loop().create_task(self._auto_cleanup())
+            except RuntimeError:
+                pass  # Yine loop yoksa yapacak bir şey yok
+
     async def get(self, key):
         """
         Belirtilen key için cache'de saklanan değeri asenkron olarak döndürür.
         Eğer key bulunamazsa, ilgili future üzerinden beklemeyi sağlar.
         """
+        self.ensure_cleanup_task()
         self.remove_if_expired(key)
 
         try:
