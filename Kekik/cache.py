@@ -1,22 +1,26 @@
-# ! https://github.com/Fatal1ty/aiocached
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 from .cli         import konsol
 from functools    import wraps
-from time         import time, sleep
 from hashlib      import md5
 from urllib.parse import urlencode
-import asyncio, threading
+import time
+import threading
+import asyncio
+import pickle
+
+# Redis için asenkron client (Redis yoksa fallback yapılacak)
+import redis.asyncio as redis
 
 # -----------------------------------------------------
-# Yardımcı Fonksiyonlar
+# Sabitler ve Yardımcı Fonksiyonlar
 # -----------------------------------------------------
-
 UNLIMITED = None
 
 def normalize_for_key(value):
     """
     Cache key oluşturma amacıyla verilen değeri normalize eder.
-    - Basit tipler (int, float, str, bool, None) direk kullanılır.
+    - Basit tipler (int, float, str, bool, None) doğrudan kullanılır.
     - dict: Anahtarları sıralı olarak normalize eder.
     - list/tuple: Elemanları normalize eder.
     - Diğer: Sadece sınıf ismi kullanılır.
@@ -36,7 +40,7 @@ def normalize_for_key(value):
 def simple_cache_key(func, args, kwargs) -> str:
     """
     Fonksiyonun tam adı ve parametrelerini kullanarak bir cache key oluşturur.
-    Oluşturulan stringin sonuna MD5 hash eklenir.
+    Oluşturulan stringin sonuna MD5 hash eklenebilir.
     """
     base_key = f"{func.__module__}.{func.__qualname__}"
 
@@ -60,7 +64,7 @@ async def make_cache_key(func, args, kwargs, is_fastapi=False) -> str:
     if not is_fastapi:
         return simple_cache_key(func, args, kwargs)
 
-    # FastAPI: request ilk argüman ya da kwargs'dan alınır
+    # FastAPI: request ilk argümandan ya da kwargs'dan alınır.
     request = args[0] if args else kwargs.get("request")
 
     if request.method == "GET":
@@ -73,19 +77,42 @@ async def make_cache_key(func, args, kwargs, is_fastapi=False) -> str:
             form_data = await request.form()
             veri = dict(form_data.items())
 
+    # Eğer "kurek" gibi özel parametreler varsa temizleyebilirsiniz:
+    veri.pop("kurek", None)
+
     args_hash = md5(urlencode(veri).encode()).hexdigest() if veri else ""
     return f"{request.url.path}?{veri}"
 
-
 # -----------------------------------------------------
-# In-Memory (RAM) Cache
+# Senkron Cache (RAM) Sınıfı
 # -----------------------------------------------------
 
-class Cache:
-    def __init__(self, ttl=UNLIMITED):
+class SyncCache:
+    """
+    Senkron fonksiyonlar için basit in-memory cache.
+    TTL süresi dolan veriler periyodik olarak arka plan thread’iyle temizlenir.
+    """
+    def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60):
         self._ttl   = ttl
         self._data  = {}
         self._times = {}
+
+        # TTL sınırsız değilse, cleanup_interval ile ttl'den büyük olanı kullanıyoruz.
+        self._cleanup_interval = max(ttl, cleanup_interval) if ttl is not UNLIMITED else cleanup_interval
+
+        # Arka planda çalışan ve periyodik olarak expired entry'leri temizleyen thread başlatılıyor.
+        self._lock           = threading.RLock()
+        self._cleanup_thread = threading.Thread(target=self._auto_cleanup, daemon=True)
+        self._cleanup_thread.start()
+
+    def _auto_cleanup(self):
+        """Belirlenen aralıklarla cache içerisindeki süresi dolmuş entry'leri temizler."""
+        while True:
+            time.sleep(self._cleanup_interval)
+            with self._lock:
+                keys = list(self._data.keys())
+                for key in keys:
+                    self.remove_if_expired(key)
 
     def _is_expired(self, key):
         """Belirtilen key'in süresi dolmuşsa True döner."""
@@ -94,34 +121,7 @@ class Cache:
 
         timestamp = self._times.get(key)
 
-        return timestamp is not None and (time() - timestamp > self._ttl)
-
-
-class SyncCache(Cache):
-    """
-    Basit in-memory cache yapısı.
-    TTL (time-to-live) süresi dolan veriler otomatik olarak temizlenir.
-    Bu versiyonda, otomatik temizleme işlevselliği bir thread ile sağlanır.
-    """
-    def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60):
-        super().__init__(ttl)
-
-        # TTL sınırsız değilse, cleanup_interval ile ttl'den büyük olanı kullanıyoruz.
-        self._cleanup_interval = max(ttl, cleanup_interval) if ttl is not UNLIMITED else cleanup_interval
-        self._lock = threading.RLock()
-
-        # Arka planda çalışan ve periyodik olarak expired entry'leri temizleyen thread başlatılıyor.
-        self._cleanup_thread = threading.Thread(target=self._auto_cleanup, daemon=True)
-        self._cleanup_thread.start()
-
-    def _auto_cleanup(self):
-        """Belirlenen aralıklarla cache içerisindeki süresi dolmuş entry'leri temizler."""
-        while True:
-            sleep(self._cleanup_interval)
-            with self._lock:
-                keys = list(self._data.keys())
-                for key in keys:
-                    self.remove_if_expired(key)
+        return timestamp is not None and (time.time() - timestamp > self._ttl)
 
     def remove_if_expired(self, key):
         """
@@ -144,26 +144,30 @@ class SyncCache(Cache):
     def __setitem__(self, key, value):
         with self._lock:
             self._data[key] = value
-            # konsol.log(f"[green][+] {key}")
             if self._ttl is not UNLIMITED:
-                self._times[key] = time()
+                self._times[key] = time.time()
 
+# -----------------------------------------------------
+# Asenkron Cache (In-Memory) ve Redis Hybrid Cache
+# -----------------------------------------------------
 
-class AsyncCache(Cache):
+class AsyncCache:
     """
-    Asenkron işlemleri destekleyen cache yapısı.
-    Aynı key için gelen eşzamanlı çağrılar, futures kullanılarak tek sonuç üzerinden paylaşılır.
-    Ek olarak, belirli aralıklarla cache’i kontrol edip, süresi dolmuş verileri temizleyen otomatik temizleme görevi çalışır.
+    Temel in-memory asenkron cache.
     """
     def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60):
         """
         :param ttl: Her entry için geçerli süre (saniye). Örneğin 3600 saniye 1 saattir.
         :param cleanup_interval: Otomatik temizleme görevinin kaç saniyede bir çalışacağını belirler.
         """
-        super().__init__(ttl)
+        self._ttl    = ttl
+        self._data   = {}
+        self._times  = {}
         self.futures = {}
 
+        # TTL sınırsız değilse, cleanup_interval ile ttl'den büyük olanı kullanıyoruz.
         self._cleanup_interval = max(ttl, cleanup_interval) if ttl is not UNLIMITED else cleanup_interval
+
         # Aktif bir event loop varsa otomatik temizlik görevini başlatıyoruz.
         try:
             self._cleanup_task = asyncio.get_running_loop().create_task(self._auto_cleanup())
@@ -174,9 +178,7 @@ class AsyncCache(Cache):
         """Belirlenen aralıklarla cache içerisindeki süresi dolmuş entry'leri temizler."""
         while True:
             await asyncio.sleep(self._cleanup_interval)
-            # _data kopyasını almak, üzerinde dönüp silme yaparken hata almamak için.
-            keys = list(self._data.keys())
-            for key in keys:
+            for key in list(self._data.keys()):
                 self.remove_if_expired(key)
 
     def ensure_cleanup_task(self):
@@ -187,59 +189,137 @@ class AsyncCache(Cache):
             except RuntimeError:
                 pass  # Yine loop yoksa yapacak bir şey yok
 
+    def remove_if_expired(self, key):
+        """
+        Belirtilen key'in süresi dolduysa, cache ve futures içerisinden temizler.
+        """
+        if self._ttl is not UNLIMITED:
+            t = self._times.get(key)
+            if t is not None and (time.time() - t > self._ttl):
+                # konsol.log(f"[red][-] {key}")
+                self._data.pop(key, None)
+                self._times.pop(key, None)
+                self.futures.pop(key, None)
+
     async def get(self, key):
         """
         Belirtilen key için cache'de saklanan değeri asenkron olarak döndürür.
         Eğer key bulunamazsa, ilgili future üzerinden beklemeyi sağlar.
         """
+        # Cleanup task'in aktif olduğundan emin olun.
         self.ensure_cleanup_task()
+        # Eğer key'in süresi dolmuşsa, kaldırın.
         self.remove_if_expired(key)
 
         try:
-            veri = self._data[key]
+            # Cache içerisinde key varsa direkt değeri döndür.
+            value = self._data[key]
             # konsol.log(f"[yellow][~] {key}")
-            return veri
-        except KeyError as e:
+            return value
+        except KeyError:
+            # Eğer key cache'de yoksa, aynı key ile başlatılmış future varsa onu bekle.
             future = self.futures.get(key)
             if future:
                 await future
-                veri = future.result()
+                # Future tamamlandığında sonucu döndür.
+                value = future.result()
                 # konsol.log(f"[yellow][?] {key}")
-                return veri
+                return value
+            # Eğer future da yoksa, key bulunamadığına dair hata fırlat.
+            raise KeyError(key)
 
-            raise e
-
-    def remove_if_expired(self, key):
-        """
-        Belirtilen key'in süresi dolduysa, cache ve futures içerisinden temizler.
-        """
-        if self._ttl is not UNLIMITED and self._is_expired(key):
-            # konsol.log(f"[red][-] {key}")
-            self._data.pop(key, None)
-            self._times.pop(key, None)
-            self.futures.pop(key, None)
-
-    def __setitem__(self, key, value):
+    async def set(self, key, value):
+        """Belirtilen key için cache'e değer ekler."""
+        self.ensure_cleanup_task()
         self._data[key] = value
         if self._ttl is not UNLIMITED:
-            self._times[key] = time()
+            self._times[key] = time.time()
 
+class HybridAsyncCache:
+    """
+    Öncelikle Redis cache kullanılmaya çalışılır.
+    Hata durumunda veya Redis erişilemiyorsa in-memory AsyncCache’e geçilir.
+    """
+    def __init__(self, ttl=UNLIMITED):
+        self._ttl = ttl
+
+        try:
+            self.redis = redis.Redis(
+                host             = "127.0.0.1",
+                port             = 6379,
+                decode_responses = False
+            )
+        except Exception:
+            self.redis = None
+
+        self.memory  = AsyncCache(ttl)
+        self.futures = {}
+
+    async def get(self, key):
+        # Eşzamanlı istek yönetimi: aynı key için bir future varsa, direkt bekleyip sonucu döndür.
+        if key in self.futures:
+            # konsol.log(f"[yellow][?] {key}")
+            return await self.futures[key]
+
+        # İlk önce Redis ile deneyelim
+        if self.redis:
+            try:
+                data = await self.redis.get(key)
+            except Exception:
+                return await self.memory.get(key)
+            if data is not None:
+                try:
+                    result = pickle.loads(data)
+                    # konsol.log(f"[yellow][~] {key}")
+                    return result
+                except Exception:
+                    # Deserialize hatası durumunda in-memory cache'ten dene
+                    return await self.memory.get(key)
+            else:
+                # Redis'te veri yoksa, in-memory cache'e bak
+                return await self.memory.get(key)
+        else:
+            # Redis kullanılmıyorsa doğrudan in-memory cache'e bak
+            return await self.memory.get(key)
+
+    async def set(self, key, value):
+        # Önce veriyi pickle etmeyi deniyoruz.
+        try:
+            ser = pickle.dumps(value)
+        except Exception:
+            # Serialization hatası durumunda sadece in-memory cache'e yaz
+            await self.memory.set(key, value)
+            return
+
+        if self.redis:
+            try:
+                if self._ttl is not UNLIMITED:
+                    await self.redis.set(key, ser, ex=self._ttl)
+                else:
+                    await self.redis.set(key, ser)
+                return
+            except Exception:
+                # Redis yazma hatası durumunda in-memory fallback
+                await self.memory.set(key, value)
+                return
+        else:
+            # Redis yoksa in-memory cache'e yaz
+            await self.memory.set(key, value)
 
 # -----------------------------------------------------
-# Fonksiyonun Sonucunu Hesaplayıp Cache'e Yazma
+# Cache'e Hesaplanmış Sonucu Yazma Yardımcı Fonksiyonları
 # -----------------------------------------------------
 
 def _sync_maybe_cache(func, key, result, unless):
-    """Senkron sonuç için cache kaydını oluşturur (unless koşuluna bakarak)."""
+    """Senkron fonksiyon sonucu için cache kaydı oluşturur."""
     if unless is None or not unless(result):
         func.__cache[key] = result
         # konsol.log(f"[green][+] {key}")
 
 async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
     """
-    Asenkron fonksiyon sonucunu hesaplar ve cache'e ekler.
-    Aynı key için işlem devam ediyorsa, mevcut sonucu bekler.
-    Sonuç, unless(result) True değilse cache'e eklenir.
+    Asenkron fonksiyon sonucunu hesaplar ve cache'e yazar.
+    Aynı key için gelen eşzamanlı çağrılar future üzerinden bekletilir.
     """
     # __cache'den cache nesnesini alıyoruz.
     cache = func.__cache
@@ -256,12 +336,12 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
         # Asenkron fonksiyonu çalıştır ve sonucu elde et.
         result = await func(*args, **kwargs)
         future.set_result(result)
-        
+
         # unless koşuluna göre cache'e ekleme yap.
         if unless is None or not unless(result):
-            cache[key] = result
+            await cache.set(key, result)
             # konsol.log(f"[green][+] {key}")
-        
+
         return result
     except Exception as exc:
         future.cancel()
@@ -270,44 +350,35 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
         # İşlem tamamlandığında future'ı temizle.
         cache.futures.pop(key, None)
 
-
 # -----------------------------------------------------
-# Dekoratör: kekik_cache
+# kekik_cache Dekoratörü (Senkrondan Asenkrona)
 # -----------------------------------------------------
 
-def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
+def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False, use_redis=True):
     """
-    Bir fonksiyon veya coroutine'in sonucunu cache'ler.
-
-    Args:
-        ttl (int, optional): Cache’in geçerlilik süresi (saniye). 
-                                       Eğer `UNLIMITED` ise süresizdir. Varsayılan olarak `UNLIMITED`'dir.
-        unless (callable, optional): Fonksiyonun sonucunu argüman olarak alan bir callable. 
-                                               Eğer `True` dönerse, sonuç cache'e alınmaz. Varsayılan olarak `None`'dır.
-        is_fastapi (bool, optional): Eğer `True` ise, cache key'i oluştururken FastAPI request nesnesine özel şekilde davranır.
-                                     Varsayılan olarak `False`'tır.
-
-    Notlar:
-    -------
-    Normalde yalnızca Redis cache kullanılmak istenir.
-    Ancak Redis'e ulaşılamayan durumlarda RAM fallback kullanılır.
-
-    ---
-
-    Örn.:
+    Bir fonksiyonun (senkron/asenkron) sonucunu cache'ler.
     
-        @kekik_cache(ttl=15, unless=lambda sonuc: bool(sonuc is None))
+    Parametreler:
+      - ttl: Cache'in geçerlilik süresi (saniye). UNLIMITED ise süresizdir.
+      - unless: Sonuç alınmadan önce çağrılan, True dönerse cache'e alınmaz.
+      - is_fastapi: True ise, FastAPI Request nesnesine göre key oluşturur.
+      - use_redis: Asenkron fonksiyonlarda Redis kullanımı (Hybrid cache) için True verilebilir.
+    
+    Örnek Kullanım:
+    
+        @kekik_cache(ttl=15, unless=lambda sonuc: sonuc is None)
         async def bakalim(param):
-            # Burada cache işlemi yapılır.
             return param
     """
-    # Parametresiz kullanıldığında
+    # Parametresiz kullanım durumunda
     if callable(ttl):
-        return kekik_cache(UNLIMITED, unless=unless, is_fastapi=is_fastapi)(ttl)
+        return kekik_cache(UNLIMITED, unless=unless, is_fastapi=is_fastapi, use_redis=use_redis)(ttl)
 
     def decorator(func):
         if asyncio.iscoroutinefunction(func):
-            func.__cache = AsyncCache(ttl)
+            # Asenkron fonksiyonlar için cache türünü seçelim:
+
+            func.__cache = HybridAsyncCache(ttl) if use_redis else AsyncCache(ttl)
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
@@ -320,6 +391,7 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
 
             return async_wrapper
         else:
+            # Senkron fonksiyonlar için
             func.__cache = SyncCache(ttl)
 
             @wraps(func)
