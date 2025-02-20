@@ -1,25 +1,94 @@
 # ! https://github.com/Fatal1ty/aiocached
 
-import asyncio
+from .cli         import konsol
 from functools    import wraps
-from time         import time
+from time         import time, sleep
 from hashlib      import md5
 from urllib.parse import urlencode
+import asyncio, threading
+
+# -----------------------------------------------------
+# Yardımcı Fonksiyonlar
+# -----------------------------------------------------
 
 UNLIMITED = None
 
+def normalize_for_key(value):
+    """
+    Cache key oluşturma amacıyla verilen değeri normalize eder.
+    - Basit tipler (int, float, str, bool, None) direk kullanılır.
+    - dict: Anahtarları sıralı olarak normalize eder.
+    - list/tuple: Elemanları normalize eder.
+    - Diğer: Sadece sınıf ismi kullanılır.
+    """
+    if isinstance(value, (int, float, str, bool, type(None))):
+        return value
+
+    elif isinstance(value, dict):
+        return {k: normalize_for_key(value[k]) for k in sorted(value)}
+
+    elif isinstance(value, (list, tuple)):
+        return [normalize_for_key(item) for item in value]
+
+    else:
+        return value.__class__.__name__
+
+def simple_cache_key(func, args, kwargs) -> str:
+    """
+    Fonksiyonun tam adı ve parametrelerini kullanarak bir cache key oluşturur.
+    Oluşturulan stringin sonuna MD5 hash eklenir.
+    """
+    base_key = f"{func.__module__}.{func.__qualname__}"
+
+    if args:
+        norm_args = [normalize_for_key(arg) for arg in args]
+        base_key += f"|{norm_args}"
+
+    if kwargs:
+        norm_kwargs = {k: normalize_for_key(v) for k, v in kwargs.items()}
+        base_key   += f"|{str(sorted(norm_kwargs.items()))}"
+
+    hashed = md5(base_key.encode('utf-8')).hexdigest()
+    return f"{base_key}"  # |{hashed}
+
+async def make_cache_key(func, args, kwargs, is_fastapi=False) -> str:
+    """
+    Cache key'ini oluşturur.
+    - is_fastapi=False ise simple_cache_key() kullanılır.
+    - True ise FastAPI Request nesnesine göre özel key oluşturulur.
+    """
+    if not is_fastapi:
+        return simple_cache_key(func, args, kwargs)
+
+    # FastAPI: request ilk argüman ya da kwargs'dan alınır
+    request = args[0] if args else kwargs.get("request")
+
+    if request.method == "GET":
+        # Eğer query_params boşsa {} olarak ayarla
+        veri = dict(request.query_params) if request.query_params else {}
+    else:
+        try:
+            veri = await request.json()
+        except Exception:
+            form_data = await request.form()
+            veri = dict(form_data.items())
+
+    args_hash = md5(urlencode(veri).encode()).hexdigest() if veri else ""
+    return f"{request.url.path}?{veri}"
+
+
+# -----------------------------------------------------
+# In-Memory (RAM) Cache
+# -----------------------------------------------------
+
 class Cache:
-    """
-    Basit in-memory cache yapısı.
-    TTL (time-to-live) süresi dolan veriler otomatik olarak temizlenir (get/erişim anında kontrol edilir).
-    """
     def __init__(self, ttl=UNLIMITED):
-        self._data  = {}
         self._ttl   = ttl
+        self._data  = {}
         self._times = {}
 
     def _is_expired(self, key):
-        """Belirtilen key'in süresi dolduysa True döner."""
+        """Belirtilen key'in süresi dolmuşsa True döner."""
         if self._ttl is UNLIMITED:
             return False
 
@@ -27,22 +96,57 @@ class Cache:
 
         return timestamp is not None and (time() - timestamp > self._ttl)
 
+
+class SyncCache(Cache):
+    """
+    Basit in-memory cache yapısı.
+    TTL (time-to-live) süresi dolan veriler otomatik olarak temizlenir.
+    Bu versiyonda, otomatik temizleme işlevselliği bir thread ile sağlanır.
+    """
+    def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60):
+        super().__init__(ttl)
+
+        # TTL sınırsız değilse, cleanup_interval ile ttl'den büyük olanı kullanıyoruz.
+        self._cleanup_interval = max(ttl, cleanup_interval) if ttl is not UNLIMITED else cleanup_interval
+        self._lock = threading.RLock()
+
+        # Arka planda çalışan ve periyodik olarak expired entry'leri temizleyen thread başlatılıyor.
+        self._cleanup_thread = threading.Thread(target=self._auto_cleanup, daemon=True)
+        self._cleanup_thread.start()
+
+    def _auto_cleanup(self):
+        """Belirlenen aralıklarla cache içerisindeki süresi dolmuş entry'leri temizler."""
+        while True:
+            sleep(self._cleanup_interval)
+            with self._lock:
+                keys = list(self._data.keys())
+                for key in keys:
+                    self.remove_if_expired(key)
+
     def remove_if_expired(self, key):
         """
         Eğer key'in cache süresi dolmuşsa, ilgili entry'yi temizler.
+        Thread güvenliği sağlamak için lock kullanılır.
         """
-        if self._is_expired(key):
-            self._data.pop(key, None)
-            self._times.pop(key, None)
+        with self._lock:
+            if self._is_expired(key):
+                self._data.pop(key, None)
+                self._times.pop(key, None)
+                # konsol.log(f"[red][-] {key}")
 
     def __getitem__(self, key):
-        self.remove_if_expired(key)
-        return self._data[key]
+        with self._lock:
+            self.remove_if_expired(key)
+            veri = self._data[key]
+            # konsol.log(f"[yellow][~] {key}")
+            return veri
 
     def __setitem__(self, key, value):
-        self._data[key] = value
-        if self._ttl is not UNLIMITED:
-            self._times[key] = time()
+        with self._lock:
+            self._data[key] = value
+            # konsol.log(f"[green][+] {key}")
+            if self._ttl is not UNLIMITED:
+                self._times[key] = time()
 
 
 class AsyncCache(Cache):
@@ -92,12 +196,16 @@ class AsyncCache(Cache):
         self.remove_if_expired(key)
 
         try:
-            return self._data[key]
+            veri = self._data[key]
+            # konsol.log(f"[yellow][~] {key}")
+            return veri
         except KeyError as e:
             future = self.futures.get(key)
             if future:
                 await future
-                return future.result()
+                veri = future.result()
+                # konsol.log(f"[yellow][?] {key}")
+                return veri
 
             raise e
 
@@ -106,16 +214,26 @@ class AsyncCache(Cache):
         Belirtilen key'in süresi dolduysa, cache ve futures içerisinden temizler.
         """
         if self._ttl is not UNLIMITED and self._is_expired(key):
+            # konsol.log(f"[red][-] {key}")
             self._data.pop(key, None)
             self._times.pop(key, None)
             self.futures.pop(key, None)
 
+    def __setitem__(self, key, value):
+        self._data[key] = value
+        if self._ttl is not UNLIMITED:
+            self._times[key] = time()
+
+
+# -----------------------------------------------------
+# Fonksiyonun Sonucunu Hesaplayıp Cache'e Yazma
+# -----------------------------------------------------
 
 def _sync_maybe_cache(func, key, result, unless):
     """Senkron sonuç için cache kaydını oluşturur (unless koşuluna bakarak)."""
     if unless is None or not unless(result):
         func.__cache[key] = result
-
+        # konsol.log(f"[green][+] {key}")
 
 async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
     """
@@ -142,6 +260,7 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
         # unless koşuluna göre cache'e ekleme yap.
         if unless is None or not unless(result):
             cache[key] = result
+            # konsol.log(f"[green][+] {key}")
         
         return result
     except Exception as exc:
@@ -151,34 +270,10 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
         # İşlem tamamlandığında future'ı temizle.
         cache.futures.pop(key, None)
 
-async def make_cache_key(args, kwargs, is_fastapi=False):
-    """
-    Cache key'ini oluşturur.
-    
-    :param is_fastapi (bool): Eğer True ise, ilk argümanın bir FastAPI Request nesnesi olduğu varsayılır.
-        Bu durumda, cache key, request nesnesinin URL yolunu (request.url.path) ve 
-        isteğe ait verilerden (GET istekleri için query parametreleri; diğer istekler için JSON veya form verileri)
-        elde edilen verinin URL uyumlu halinin md5 hash'inin birleşiminden oluşturulur.
-        Böylece, aynı URL ve aynı istek verileri için her seferinde aynı cache key üretilecektir.
-        Eğer False ise, cache key args ve kwargs değerlerinden, sıralı bir tuple olarak oluşturulur.
-    """
-    if not is_fastapi:
-        return (args, tuple(sorted(kwargs.items())))
 
-    request = args[0] if args else kwargs.get("request")
-
-    if request.method == "GET":
-        veri = dict(request.query_params) if request.query_params else None
-    else:
-        try:
-            veri = await request.json()
-        except Exception:
-            form_data = await request.form()
-            veri = dict(form_data.items())
-
-    args_hash = md5(urlencode(veri).encode()).hexdigest() if veri else ""
-    return f"{request.url.path}?{args_hash}"
-
+# -----------------------------------------------------
+# Dekoratör: kekik_cache
+# -----------------------------------------------------
 
 def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
     """
@@ -211,12 +306,12 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
         return kekik_cache(UNLIMITED, unless=unless, is_fastapi=is_fastapi)(ttl)
 
     def decorator(func):
-        func.__cache = AsyncCache(ttl)
-
         if asyncio.iscoroutinefunction(func):
+            func.__cache = AsyncCache(ttl)
+
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
-                key = await make_cache_key(args, kwargs, is_fastapi)
+                key = await make_cache_key(func, args, kwargs, is_fastapi)
 
                 try:
                     return await func.__cache.get(key)
@@ -225,9 +320,11 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False):
 
             return async_wrapper
         else:
+            func.__cache = SyncCache(ttl)
+
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
-                key = (args, tuple(sorted(kwargs.items())))
+                key = simple_cache_key(func, args, kwargs)
 
                 try:
                     return func.__cache[key]
