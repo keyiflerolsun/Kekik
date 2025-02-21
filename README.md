@@ -327,6 +327,26 @@ print(NaysHash().generate_xtoken(
 # EygcmEIe3aU0TWIubaQTuBwbrqpY7HFcNDajlSKCT5c=
 ```
 
+### **[kekik_cache](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/cache.py)**
+```python
+import Kekik.cache as cache
+cache.REDIS_HOST = "127.0.0.1"
+cache.REDIS_PORT = 6379
+cache.REDIS_DB   = 0
+cache.REDIS_PASS = None
+kekik_cache      = cache.kekik_cache
+
+@kekik_cache(ttl=5)
+def sync_func(x, y):
+    time.sleep(1)
+    return x + y
+
+@kekik_cache(ttl=5)
+async def async_func(x, y):
+    await asyncio.sleep(1)
+    return x * y
+```
+
 ### **[dict2json](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dict2json.py)**
 ### **[dosya_indir](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/dosya_indir.py)**
 ### **[benim_hwid](https://github.com/keyiflerolsun/Kekik/blob/main/Kekik/hwid_kontrol.py)**
