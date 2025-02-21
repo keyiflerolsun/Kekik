@@ -9,13 +9,19 @@ import threading
 import asyncio
 import pickle
 
-# Redis için asenkron client (Redis yoksa fallback yapılacak)
-import redis.asyncio as redis
+# Redis client (Redis yoksa fallback yapılacak)
+import redis.asyncio as redisAsync
+import redis         as redis
 
 # -----------------------------------------------------
 # Sabitler ve Yardımcı Fonksiyonlar
 # -----------------------------------------------------
-UNLIMITED = None
+UNLIMITED  = None
+
+REDIS_HOST = "127.0.0.1"
+REDIS_PORT = 6379
+REDIS_DB   = 0
+REDIS_PASS = None
 
 def normalize_for_key(value):
     """
@@ -147,6 +153,80 @@ class SyncCache:
             if self._ttl is not UNLIMITED:
                 self._times[key] = time.time()
 
+class HybridSyncCache:
+    """
+    Senkron işlemler için, öncelikle Redis cache kullanılmaya çalışılır.
+    Redis'ten veri alınamazsa ya da hata oluşursa, SyncCache (in-memory) fallback uygulanır.
+    """
+    def __init__(self, ttl=None):
+        self._ttl = ttl
+
+        try:
+            self.redis = redis.Redis(
+                host             = REDIS_HOST,
+                port             = REDIS_PORT,
+                db               = REDIS_DB,
+                password         = REDIS_PASS,
+                decode_responses = False
+            )
+            self.redis.ping()
+        except Exception:
+            self.redis = None
+
+        self.memory = SyncCache(ttl)
+
+    def get(self, key):
+        # Önce Redis ile deniyoruz:
+        if self.redis:
+            try:
+                data = self.redis.get(key)
+            except Exception:
+                data = None
+            if data is not None:
+                try:
+                    result = pickle.loads(data)
+                    # konsol.log(f"[yellow][~] {key}")
+                    return result
+                except Exception:
+                    # Deserialize hatası durumunda fallback'e geç
+                    pass
+
+        # Redis'te veri yoksa, yerel cache'ten alıyoruz.
+        try:
+            return self.memory[key]
+        except KeyError:
+            raise KeyError(key)
+
+    def set(self, key, value):
+        try:
+            ser = pickle.dumps(value)
+        except Exception:
+            # Serialization hatası durumunda yerel cache'e yazalım.
+            self.memory[key] = value
+            return
+
+        if self.redis:
+            try:
+                if self._ttl is not None:
+                    self.redis.set(key, ser, ex=self._ttl)
+                else:
+                    self.redis.set(key, ser)
+                return
+            except Exception:
+                # Redis'e yazılamazsa yerel cache'e geçelim.
+                self.memory[key] = value
+                return
+        else:
+            # Redis kullanılmıyorsa direkt yerel cache'e yaz.
+            self.memory[key] = value
+
+    # HybridSyncCache'in subscriptable olması için:
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
 # -----------------------------------------------------
 # Asenkron Cache (In-Memory) ve Redis Hybrid Cache
 # -----------------------------------------------------
@@ -244,9 +324,11 @@ class HybridAsyncCache:
         self._ttl = ttl
 
         try:
-            self.redis = redis.Redis(
-                host             = "127.0.0.1",
-                port             = 6379,
+            self.redis = redisAsync.Redis(
+                host             = REDIS_HOST,
+                port             = REDIS_PORT,
+                db               = REDIS_DB,
+                password         = REDIS_PASS,
                 decode_responses = False
             )
         except Exception:
@@ -392,7 +474,7 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False, use_redis=True):
             return async_wrapper
         else:
             # Senkron fonksiyonlar için
-            func.__cache = SyncCache(ttl)
+            func.__cache = HybridSyncCache(ttl) if use_redis else SyncCache(ttl)
 
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
