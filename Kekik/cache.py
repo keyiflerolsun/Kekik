@@ -53,6 +53,7 @@ def simple_cache_key(func, args, kwargs) -> str:
     Oluşturulan stringin sonuna MD5 hash eklenebilir.
     """
     base_key = f"{func.__module__}.{func.__qualname__}"
+    base_key = "|".join(base_key.split("."))
 
     if args:
         norm_args = [normalize_for_key(arg) for arg in args]
@@ -77,7 +78,7 @@ async def make_cache_key(func, args, kwargs, is_fastapi=False, include_auth=Fals
 
     # FastAPI: request ilk argümandan ya da kwargs'dan alınır.
     request = args[0] if args else kwargs.get("request")
-    
+
     # Request bulunamamışsa fallback
     if request is None or not hasattr(request, 'method'):
         return simple_cache_key(func, args, kwargs)
@@ -107,7 +108,7 @@ async def make_cache_key(func, args, kwargs, is_fastapi=False, include_auth=Fals
             veri[f"_auth_hash"] = auth_hash
 
         args_hash = md5(urlencode(veri).encode()).hexdigest() if veri else ""
-        return f"{request.url.path}?{veri}"
+        return f"{request.url.path}|{veri}" if veri else f"{request.url.path}"
     except Exception as e:
         # Herhangi bir hata durumunda fallback
         konsol.log(f"[yellow]FastAPI cache key oluşturma hatası: {e}, basit key kullanılıyor")
@@ -564,7 +565,7 @@ def kekik_cache(ttl=UNLIMITED, unless=None, use_redis=True, max_size=10000, is_f
                 # is_fastapi otomatik deteksiyon (None ise) ya da manuel belirtim
                 detect_fastapi = is_fastapi
                 if detect_fastapi is None:
-                    detect_fastapi = args and hasattr(args[0], 'url') and hasattr(args[0], 'method')
+                    detect_fastapi = args and hasattr(args[0], "url") and hasattr(args[0], "method")
 
                 key = await make_cache_key(func, args, kwargs, detect_fastapi, include_auth=include_auth)
 
