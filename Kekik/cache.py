@@ -96,29 +96,35 @@ async def make_cache_key(func, args, kwargs, is_fastapi=False) -> str:
 class SyncCache:
     """
     Senkron fonksiyonlar için basit in-memory cache.
-    TTL süresi dolan veriler periyodik olarak arka plan thread’iyle temizlenir.
+    TTL süresi dolan veriler periyodik olarak arka plan thread'iyle temizlenir.
     """
-    def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60):
-        self._ttl   = ttl
-        self._data  = {}
-        self._times = {}
+    def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60, max_size=10000):
+        self._ttl           = ttl
+        self._data          = {}
+        self._times         = {}
+        self._access_counts = {}  # LRU tracker
+        self._max_size      = max_size
 
-        # TTL sınırsız değilse, cleanup_interval ile ttl'den büyük olanı kullanıyoruz.
-        self._cleanup_interval = max(ttl, cleanup_interval) if ttl is not UNLIMITED else cleanup_interval
+        # TTL sınırsız değilse, cleanup_interval kullanıyoruz.
+        self._cleanup_interval = cleanup_interval if ttl is UNLIMITED else min(ttl, cleanup_interval)
 
         # Arka planda çalışan ve periyodik olarak expired entry'leri temizleyen thread başlatılıyor.
-        self._lock           = threading.RLock()
-        self._cleanup_thread = threading.Thread(target=self._auto_cleanup, daemon=True)
+        self._lock                  = threading.RLock()
+        self._cleanup_thread        = threading.Thread(target=self._auto_cleanup, daemon=True)
+        self._cleanup_thread.daemon = True
         self._cleanup_thread.start()
 
     def _auto_cleanup(self):
         """Belirlenen aralıklarla cache içerisindeki süresi dolmuş entry'leri temizler."""
         while True:
-            time.sleep(self._cleanup_interval)
-            with self._lock:
-                keys = list(self._data.keys())
-                for key in keys:
-                    self.remove_if_expired(key)
+            try:
+                time.sleep(self._cleanup_interval)
+                with self._lock:
+                    keys = list(self._data.keys())
+                    for key in keys:
+                        self.remove_if_expired(key)
+            except Exception as e:
+                konsol.log(f"[red]Cache cleanup hatası: {e}")
 
     def _is_expired(self, key):
         """Belirtilen key'in süresi dolmuşsa True döner."""
@@ -144,12 +150,24 @@ class SyncCache:
         with self._lock:
             self.remove_if_expired(key)
             veri = self._data[key]
+            # LRU tracker'ı güncelle
+            self._access_counts[key] = self._access_counts.get(key, 0) + 1
             # konsol.log(f"[yellow][~] {key}")
             return veri
 
     def __setitem__(self, key, value):
         with self._lock:
-            self._data[key] = value
+            # Kapasite kontrolü - LRU temizlemesi
+            if len(self._data) >= self._max_size and key not in self._data:
+                # En az kullanılan key'i bul ve sil
+                lru_key = min(self._access_counts, key=self._access_counts.get)
+                self._data.pop(lru_key, None)
+                self._times.pop(lru_key, None)
+                self._access_counts.pop(lru_key, None)
+                # konsol.log(f"[red][-] LRU eviction: {lru_key}")
+
+            self._data[key]          = value
+            self._access_counts[key] = 0
             if self._ttl is not UNLIMITED:
                 self._times[key] = time.time()
 
@@ -158,8 +176,9 @@ class HybridSyncCache:
     Senkron işlemler için, öncelikle Redis cache kullanılmaya çalışılır.
     Redis'ten veri alınamazsa ya da hata oluşursa, SyncCache (in-memory) fallback uygulanır.
     """
-    def __init__(self, ttl=None):
+    def __init__(self, ttl=None, max_size=10000):
         self._ttl = ttl
+        self._max_size = max_size
 
         try:
             self.redis = redis.Redis(
@@ -170,25 +189,28 @@ class HybridSyncCache:
                 decode_responses = False
             )
             self.redis.ping()
-        except Exception:
+        except Exception as e:
+            konsol.log(f"[yellow]Redis bağlantısı başarısız, in-memory cache kullanılıyor: {e}")
             self.redis = None
 
-        self.memory = SyncCache(ttl)
+        self.memory = SyncCache(ttl, max_size=max_size)
 
     def get(self, key):
         # Önce Redis ile deniyoruz:
         if self.redis:
             try:
                 data = self.redis.get(key)
-            except Exception:
+            except Exception as e:
+                konsol.log(f"[yellow]Redis get hatası: {e}")
                 data = None
             if data is not None:
                 try:
                     result = pickle.loads(data)
                     # konsol.log(f"[yellow][~] {key}")
                     return result
-                except Exception:
+                except Exception as e:
                     # Deserialize hatası durumunda fallback'e geç
+                    konsol.log(f"[yellow]Pickle deserialize hatası: {e}")
                     pass
 
         # Redis'te veri yoksa, yerel cache'ten alıyoruz.
@@ -200,8 +222,9 @@ class HybridSyncCache:
     def set(self, key, value):
         try:
             ser = pickle.dumps(value)
-        except Exception:
+        except Exception as e:
             # Serialization hatası durumunda yerel cache'e yazalım.
+            konsol.log(f"[yellow]Pickle serialize hatası: {e}, in-memory cache kullanılıyor")
             self.memory[key] = value
             return
 
@@ -212,8 +235,9 @@ class HybridSyncCache:
                 else:
                     self.redis.set(key, ser)
                 return
-            except Exception:
+            except Exception as e:
                 # Redis'e yazılamazsa yerel cache'e geçelim.
+                konsol.log(f"[yellow]Redis set hatası: {e}, in-memory cache kullanılıyor")
                 self.memory[key] = value
                 return
         else:
@@ -235,18 +259,21 @@ class AsyncCache:
     """
     Temel in-memory asenkron cache.
     """
-    def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60):
+    def __init__(self, ttl=UNLIMITED, cleanup_interval=60 * 60, max_size=10000):
         """
         :param ttl: Her entry için geçerli süre (saniye). Örneğin 3600 saniye 1 saattir.
         :param cleanup_interval: Otomatik temizleme görevinin kaç saniyede bir çalışacağını belirler.
+        :param max_size: Maksimum cache boyutu (en eski entry'ler silinir).
         """
-        self._ttl    = ttl
-        self._data   = {}
-        self._times  = {}
-        self.futures = {}
+        self._ttl           = ttl
+        self._data          = {}
+        self._times         = {}
+        self._access_counts = {}  # LRU tracker
+        self.futures        = {}
+        self._max_size      = max_size
 
-        # TTL sınırsız değilse, cleanup_interval ile ttl'den büyük olanı kullanıyoruz.
-        self._cleanup_interval = max(ttl, cleanup_interval) if ttl is not UNLIMITED else cleanup_interval
+        # TTL sınırsız değilse, cleanup_interval kullanıyoruz.
+        self._cleanup_interval = cleanup_interval if ttl is UNLIMITED else min(ttl, cleanup_interval)
 
         # Aktif bir event loop varsa otomatik temizlik görevini başlatıyoruz.
         try:
@@ -257,9 +284,12 @@ class AsyncCache:
     async def _auto_cleanup(self):
         """Belirlenen aralıklarla cache içerisindeki süresi dolmuş entry'leri temizler."""
         while True:
-            await asyncio.sleep(self._cleanup_interval)
-            for key in list(self._data.keys()):
-                self.remove_if_expired(key)
+            try:
+                await asyncio.sleep(self._cleanup_interval)
+                for key in list(self._data.keys()):
+                    self.remove_if_expired(key)
+            except Exception as e:
+                konsol.log(f"[red]Async cache cleanup hatası: {e}")
 
     def ensure_cleanup_task(self):
         """Event loop mevcutsa, cleanup task henüz başlatılmadıysa oluştur."""
@@ -294,6 +324,8 @@ class AsyncCache:
         try:
             # Cache içerisinde key varsa direkt değeri döndür.
             value = self._data[key]
+            # LRU tracker'ı güncelle
+            self._access_counts[key] = self._access_counts.get(key, 0) + 1
             # konsol.log(f"[yellow][~] {key}")
             return value
         except KeyError:
@@ -311,17 +343,30 @@ class AsyncCache:
     async def set(self, key, value):
         """Belirtilen key için cache'e değer ekler."""
         self.ensure_cleanup_task()
-        self._data[key] = value
+
+        # Kapasite kontrolü - LRU temizlemesi
+        if len(self._data) >= self._max_size and key not in self._data:
+            # En az kullanılan key'i bul ve sil
+            lru_key = min(self._access_counts, key=self._access_counts.get)
+            self._data.pop(lru_key, None)
+            self._times.pop(lru_key, None)
+            self._access_counts.pop(lru_key, None)
+            self.futures.pop(lru_key, None)
+            # konsol.log(f"[red][-] Async LRU eviction: {lru_key}")
+
+        self._data[key]          = value
+        self._access_counts[key] = 0
         if self._ttl is not UNLIMITED:
             self._times[key] = time.time()
 
 class HybridAsyncCache:
     """
     Öncelikle Redis cache kullanılmaya çalışılır.
-    Hata durumunda veya Redis erişilemiyorsa in-memory AsyncCache’e geçilir.
+    Hata durumunda veya Redis erişilemiyorsa in-memory AsyncCache'e geçilir.
     """
-    def __init__(self, ttl=UNLIMITED):
+    def __init__(self, ttl=UNLIMITED, max_size=10000):
         self._ttl = ttl
+        self._max_size = max_size
 
         try:
             self.redis = redisAsync.Redis(
@@ -331,10 +376,11 @@ class HybridAsyncCache:
                 password         = REDIS_PASS,
                 decode_responses = False
             )
-        except Exception:
+        except Exception as e:
+            konsol.log(f"[yellow]Async Redis bağlantısı başarısız, in-memory cache kullanılıyor: {e}")
             self.redis = None
 
-        self.memory  = AsyncCache(ttl)
+        self.memory  = AsyncCache(ttl, max_size=max_size)
         self.futures = {}
 
     async def get(self, key):
@@ -347,15 +393,17 @@ class HybridAsyncCache:
         if self.redis:
             try:
                 data = await self.redis.get(key)
-            except Exception:
+            except Exception as e:
+                konsol.log(f"[yellow]Async Redis get hatası: {e}")
                 return await self.memory.get(key)
             if data is not None:
                 try:
                     result = pickle.loads(data)
                     # konsol.log(f"[yellow][~] {key}")
                     return result
-                except Exception:
+                except Exception as e:
                     # Deserialize hatası durumunda in-memory cache'ten dene
+                    konsol.log(f"[yellow]Async pickle deserialize hatası: {e}")
                     return await self.memory.get(key)
             else:
                 # Redis'te veri yoksa, in-memory cache'e bak
@@ -368,8 +416,9 @@ class HybridAsyncCache:
         # Önce veriyi pickle etmeyi deniyoruz.
         try:
             ser = pickle.dumps(value)
-        except Exception:
+        except Exception as e:
             # Serialization hatası durumunda sadece in-memory cache'e yaz
+            konsol.log(f"[yellow]Async pickle serialize hatası: {e}, in-memory cache kullanılıyor")
             await self.memory.set(key, value)
             return
 
@@ -380,8 +429,9 @@ class HybridAsyncCache:
                 else:
                     await self.redis.set(key, ser)
                 return
-            except Exception:
+            except Exception as e:
                 # Redis yazma hatası durumunda in-memory fallback
+                konsol.log(f"[yellow]Async Redis set hatası: {e}, in-memory cache kullanılıyor")
                 await self.memory.set(key, value)
                 return
         else:
@@ -436,7 +486,7 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
 # kekik_cache Dekoratörü (Senkrondan Asenkrona)
 # -----------------------------------------------------
 
-def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False, use_redis=True):
+def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False, use_redis=True, max_size=10000):
     """
     Bir fonksiyonun (senkron/asenkron) sonucunu cache'ler.
     
@@ -445,6 +495,7 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False, use_redis=True):
       - unless: Sonuç alınmadan önce çağrılan, True dönerse cache'e alınmaz.
       - is_fastapi: True ise, FastAPI Request nesnesine göre key oluşturur.
       - use_redis: Asenkron fonksiyonlarda Redis kullanımı (Hybrid cache) için True verilebilir.
+      - max_size: Cache'in maksimum boyutu. Kapasiteyi aşarsa LRU temizlemesi yapılır.
     
     Örnek Kullanım:
     
@@ -454,13 +505,13 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False, use_redis=True):
     """
     # Parametresiz kullanım durumunda
     if callable(ttl):
-        return kekik_cache(UNLIMITED, unless=unless, is_fastapi=is_fastapi, use_redis=use_redis)(ttl)
+        return kekik_cache(UNLIMITED, unless=unless, is_fastapi=is_fastapi, use_redis=use_redis, max_size=max_size)(ttl)
 
     def decorator(func):
         if asyncio.iscoroutinefunction(func):
             # Asenkron fonksiyonlar için cache türünü seçelim:
 
-            func.__cache = HybridAsyncCache(ttl) if use_redis else AsyncCache(ttl)
+            func.__cache = HybridAsyncCache(ttl, max_size=max_size) if use_redis else AsyncCache(ttl, max_size=max_size)
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
@@ -474,7 +525,7 @@ def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False, use_redis=True):
             return async_wrapper
         else:
             # Senkron fonksiyonlar için
-            func.__cache = HybridSyncCache(ttl) if use_redis else SyncCache(ttl)
+            func.__cache = HybridSyncCache(ttl, max_size=max_size) if use_redis else SyncCache(ttl, max_size=max_size)
 
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
