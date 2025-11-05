@@ -23,6 +23,10 @@ REDIS_PORT = 6379
 REDIS_DB   = 0
 REDIS_PASS = None
 
+# FastAPI için cache'ten hariç tutulacak parametreler ve HTTP status kodları
+CACHE_IGNORE_PARAMS       = {"kurek", "debug", "_", "t", "timestamp"}
+CACHE_IGNORE_STATUS_CODES = {400, 401, 403, 404, 500, 501, 502, 503}
+
 def normalize_for_key(value):
     """
     Cache key oluşturma amacıyla verilen değeri normalize eder.
@@ -61,33 +65,53 @@ def simple_cache_key(func, args, kwargs) -> str:
     hashed = md5(base_key.encode('utf-8')).hexdigest()
     return f"{base_key}"  # |{hashed}
 
-async def make_cache_key(func, args, kwargs, is_fastapi=False) -> str:
+async def make_cache_key(func, args, kwargs, is_fastapi=False, include_auth=False) -> str:
     """
     Cache key'ini oluşturur.
     - is_fastapi=False ise simple_cache_key() kullanılır.
     - True ise FastAPI Request nesnesine göre özel key oluşturulur.
+    - include_auth=True ise authorization header'ı key'e dahil edilir.
     """
     if not is_fastapi:
         return simple_cache_key(func, args, kwargs)
 
     # FastAPI: request ilk argümandan ya da kwargs'dan alınır.
     request = args[0] if args else kwargs.get("request")
+    
+    # Request bulunamamışsa fallback
+    if request is None or not hasattr(request, 'method'):
+        return simple_cache_key(func, args, kwargs)
 
-    if request.method == "GET":
-        # Eğer query_params boşsa {} olarak ayarla
-        veri = dict(request.query_params) if request.query_params else {}
-    else:
-        try:
-            veri = await request.json()
-        except Exception:
-            form_data = await request.form()
-            veri = dict(form_data.items())
+    try:
+        if request.method == "GET":
+            # Eğer query_params boşsa {} olarak ayarla
+            veri = dict(request.query_params) if request.query_params else {}
+        else:
+            try:
+                content_type = request.headers.get("content-type", "")
+                if "application/json" in content_type:
+                    veri = await request.json()
+                else:
+                    form_data = await request.form()
+                    veri = dict(form_data.items())
+            except Exception:
+                veri = {}
 
-    # Eğer "kurek" gibi özel parametreler varsa temizleyebilirsiniz:
-    veri.pop("kurek", None)
+        # Sistem parametrelerini temizle
+        for param in CACHE_IGNORE_PARAMS:
+            veri.pop(param, None)
 
-    args_hash = md5(urlencode(veri).encode()).hexdigest() if veri else ""
-    return f"{request.url.path}?{veri}"
+        # Authorization header'ı dahil et (user-specific cache için)
+        if include_auth and "authorization" in request.headers:
+            auth_hash = md5(request.headers["authorization"].encode()).hexdigest()
+            veri[f"_auth_hash"] = auth_hash
+
+        args_hash = md5(urlencode(veri).encode()).hexdigest() if veri else ""
+        return f"{request.url.path}?{veri}"
+    except Exception as e:
+        # Herhangi bir hata durumunda fallback
+        konsol.log(f"[yellow]FastAPI cache key oluşturma hatası: {e}, basit key kullanılıyor")
+        return simple_cache_key(func, args, kwargs)
 
 # -----------------------------------------------------
 # Senkron Cache (RAM) Sınıfı
@@ -201,7 +225,7 @@ class HybridSyncCache:
             try:
                 data = self.redis.get(key)
             except Exception as e:
-                konsol.log(f"[yellow]Redis get hatası: {e}")
+                # konsol.log(f"[yellow]Redis get hatası: {e}")
                 data = None
             if data is not None:
                 try:
@@ -210,7 +234,7 @@ class HybridSyncCache:
                     return result
                 except Exception as e:
                     # Deserialize hatası durumunda fallback'e geç
-                    konsol.log(f"[yellow]Pickle deserialize hatası: {e}")
+                    # konsol.log(f"[yellow]Pickle deserialize hatası: {e}")
                     pass
 
         # Redis'te veri yoksa, yerel cache'ten alıyoruz.
@@ -224,7 +248,8 @@ class HybridSyncCache:
             ser = pickle.dumps(value)
         except Exception as e:
             # Serialization hatası durumunda yerel cache'e yazalım.
-            konsol.log(f"[yellow]Pickle serialize hatası: {e}, in-memory cache kullanılıyor")
+            # (TemplateResponse, FileResponse gibi pickle'lanamayan objeler için)
+            # konsol.log(f"[yellow]Pickle serialize hatası: {e}, in-memory cache kullanılıyor")
             self.memory[key] = value
             return
 
@@ -237,7 +262,7 @@ class HybridSyncCache:
                 return
             except Exception as e:
                 # Redis'e yazılamazsa yerel cache'e geçelim.
-                konsol.log(f"[yellow]Redis set hatası: {e}, in-memory cache kullanılıyor")
+                # konsol.log(f"[yellow]Redis set hatası: {e}, in-memory cache kullanılıyor")
                 self.memory[key] = value
                 return
         else:
@@ -418,7 +443,8 @@ class HybridAsyncCache:
             ser = pickle.dumps(value)
         except Exception as e:
             # Serialization hatası durumunda sadece in-memory cache'e yaz
-            konsol.log(f"[yellow]Async pickle serialize hatası: {e}, in-memory cache kullanılıyor")
+            # (TemplateResponse, FileResponse gibi pickle'lanamayan objeler için)
+            # konsol.log(f"[yellow]Async pickle serialize hatası: {e}, in-memory cache kullanılıyor")
             await self.memory.set(key, value)
             return
 
@@ -431,7 +457,7 @@ class HybridAsyncCache:
                 return
             except Exception as e:
                 # Redis yazma hatası durumunda in-memory fallback
-                konsol.log(f"[yellow]Async Redis set hatası: {e}, in-memory cache kullanılıyor")
+                # konsol.log(f"[yellow]Async Redis set hatası: {e}, in-memory cache kullanılıyor")
                 await self.memory.set(key, value)
                 return
         else:
@@ -486,36 +512,61 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
 # kekik_cache Dekoratörü (Senkrondan Asenkrona)
 # -----------------------------------------------------
 
-def kekik_cache(ttl=UNLIMITED, unless=None, is_fastapi=False, use_redis=True, max_size=10000):
+def kekik_cache(ttl=UNLIMITED, unless=None, use_redis=True, max_size=10000, is_fastapi=None, include_auth=False):
     """
     Bir fonksiyonun (senkron/asenkron) sonucunu cache'ler.
+    FastAPI endpoint'leri otomatik detekt edilir (is_fastapi=None ise) veya manuel olarak belirtilebilir.
     
     Parametreler:
       - ttl: Cache'in geçerlilik süresi (saniye). UNLIMITED ise süresizdir.
       - unless: Sonuç alınmadan önce çağrılan, True dönerse cache'e alınmaz.
-      - is_fastapi: True ise, FastAPI Request nesnesine göre key oluşturur.
+      - is_fastapi: True/False ile açıkça belirt, None ise otomatik detekt (Request nesnesine bakarak).
       - use_redis: Asenkron fonksiyonlarda Redis kullanımı (Hybrid cache) için True verilebilir.
       - max_size: Cache'in maksimum boyutu. Kapasiteyi aşarsa LRU temizlemesi yapılır.
+      - include_auth: Authorization header'ını key'e dahil et (user-specific cache).
     
     Örnek Kullanım:
     
-        @kekik_cache(ttl=15, unless=lambda sonuc: sonuc is None)
-        async def bakalim(param):
-            return param
+        # Basit fonksiyon
+        @kekik_cache(ttl=300)
+        async def hesapla(param):
+            return param * 2
+        
+        # FastAPI endpoint (otomatik detekt)
+        @app.get("/users/{user_id}")
+        @kekik_cache(ttl=300, include_auth=True)
+        async def get_user(user_id: int, request: Request):
+            return {"id": user_id, "name": "..."}
+        
+        # FastAPI endpoint (manuel belirtim)
+        @app.get("/data")
+        @kekik_cache(ttl=600, is_fastapi=True)
+        async def get_data(request: Request):
+            return {"data": "..."}
+        
+        # Hata response'larını cache'leme
+        @app.get("/data")
+        @kekik_cache(ttl=300, unless=lambda r: r.status_code >= 400)
+        async def get_data(request: Request):
+            return {}
     """
     # Parametresiz kullanım durumunda
     if callable(ttl):
-        return kekik_cache(UNLIMITED, unless=unless, is_fastapi=is_fastapi, use_redis=use_redis, max_size=max_size)(ttl)
+        return kekik_cache(UNLIMITED, unless=unless, use_redis=use_redis, max_size=max_size, is_fastapi=is_fastapi, include_auth=include_auth)(ttl)
 
     def decorator(func):
         if asyncio.iscoroutinefunction(func):
             # Asenkron fonksiyonlar için cache türünü seçelim:
-
             func.__cache = HybridAsyncCache(ttl, max_size=max_size) if use_redis else AsyncCache(ttl, max_size=max_size)
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
-                key = await make_cache_key(func, args, kwargs, is_fastapi)
+                # is_fastapi otomatik deteksiyon (None ise) ya da manuel belirtim
+                detect_fastapi = is_fastapi
+                if detect_fastapi is None:
+                    detect_fastapi = args and hasattr(args[0], 'url') and hasattr(args[0], 'method')
+
+                key = await make_cache_key(func, args, kwargs, detect_fastapi, include_auth=include_auth)
 
                 try:
                     return await func.__cache.get(key)
