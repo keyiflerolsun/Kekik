@@ -66,9 +66,43 @@ def simple_cache_key(func, args, kwargs) -> str:
     hashed = md5(base_key.encode('utf-8')).hexdigest()
     return f"{base_key}"  # |{hashed}
 
+def sync_make_cache_key(func, args, kwargs, is_fastapi=False, include_auth=False) -> str:
+    """
+    Senkron cache key oluşturma (FastAPI senkron endpoint'ler için).
+    """
+    if not is_fastapi:
+        return simple_cache_key(func, args, kwargs)
+
+    # FastAPI: request ilk argümandan ya da kwargs'dan alınır.
+    request = args[0] if args else kwargs.get("request")
+
+    try:
+        if request.method == "GET":
+            veri = dict(request.query_params) if request.query_params else {}
+        else:
+            # POST/PUT gibi methodlar için body parse edemiyoruz (senkron olduğu için)
+            # Bu durumda path ve headers'ı kullan
+            veri = {}
+
+        # Sistem parametrelerini temizle
+        for param in CACHE_IGNORE_PARAMS:
+            veri.pop(param, None)
+
+        # Authorization header'ı dahil et
+        if include_auth and "authorization" in request.headers:
+            auth_hash = md5(request.headers["authorization"].encode()).hexdigest()
+            veri[f"_auth_hash"] = auth_hash
+
+        url = request.url.path.replace("/", "|")
+        return f"{url}|{veri}" if veri else f"{url}"
+    except Exception as e:
+        # Herhangi bir hata durumunda fallback
+        konsol.log(f"[yellow]FastAPI sync cache key oluşturma hatası: {e}, basit key kullanılıyor")
+        return simple_cache_key(func, args, kwargs)
+
 async def make_cache_key(func, args, kwargs, is_fastapi=False, include_auth=False) -> str:
     """
-    Cache key'ini oluşturur.
+    Asenkron cache key oluşturma (FastAPI asenkron endpoint'ler için).
     - is_fastapi=False ise simple_cache_key() kullanılır.
     - True ise FastAPI Request nesnesine göre özel key oluşturulur.
     - include_auth=True ise authorization header'ı key'e dahil edilir.
@@ -107,8 +141,8 @@ async def make_cache_key(func, args, kwargs, is_fastapi=False, include_auth=Fals
             auth_hash = md5(request.headers["authorization"].encode()).hexdigest()
             veri[f"_auth_hash"] = auth_hash
 
-        args_hash = md5(urlencode(veri).encode()).hexdigest() if veri else ""
-        return f"{request.url.path}|{veri}" if veri else f"{request.url.path}"
+        url = request.url.path.replace("/", "|")
+        return f"{url}|{veri}" if veri else f"{url}"
     except Exception as e:
         # Herhangi bir hata durumunda fallback
         konsol.log(f"[yellow]FastAPI cache key oluşturma hatası: {e}, basit key kullanılıyor")
@@ -581,7 +615,12 @@ def kekik_cache(ttl=UNLIMITED, unless=None, use_redis=True, max_size=10000, is_f
 
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
-                key = simple_cache_key(func, args, kwargs)
+                # is_fastapi otomatik deteksiyon (None ise) ya da manuel belirtim
+                detect_fastapi = is_fastapi
+                if detect_fastapi is None:
+                    detect_fastapi = args and hasattr(args[0], "url") and hasattr(args[0], "method")
+                
+                key = sync_make_cache_key(func, args, kwargs, detect_fastapi, include_auth=include_auth)
 
                 try:
                     return func.__cache[key]
