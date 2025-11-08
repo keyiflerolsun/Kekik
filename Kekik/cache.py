@@ -23,9 +23,8 @@ REDIS_PORT = 6379
 REDIS_DB   = 0
 REDIS_PASS = None
 
-# FastAPI için cache'ten hariç tutulacak parametreler ve HTTP status kodları
+# FastAPI için cache'ten hariç tutulacak parametreler
 CACHE_IGNORE_PARAMS       = {"kurek", "debug", "_", "t", "timestamp"}
-CACHE_IGNORE_STATUS_CODES = {400, 401, 403, 404, 500, 501, 502, 503}
 
 def normalize_for_key(value):
     """
@@ -504,7 +503,11 @@ class HybridAsyncCache:
 # -----------------------------------------------------
 
 def _sync_maybe_cache(func, key, result, unless):
-    """Senkron fonksiyon sonucu için cache kaydı oluşturur."""
+    """Senkron fonksiyon sonucu için cache kaydı oluşturur. Status code 200 ise cache'ler."""
+    # Status code 200 değilse cache'leme
+    if hasattr(result, 'status_code') and result.status_code != 200:
+        return
+    
     if unless is None or not unless(result):
         func.__cache[key] = result
         # konsol.log(f"[green][+] {key}")
@@ -529,6 +532,10 @@ async def _async_compute_and_cache(func, key, unless, *args, **kwargs):
         # Asenkron fonksiyonu çalıştır ve sonucu elde et.
         result = await func(*args, **kwargs)
         future.set_result(result)
+
+        # Status code 200 değilse cache'leme
+        if hasattr(result, 'status_code') and result.status_code != 200:
+            return result
 
         # unless koşuluna göre cache'e ekleme yap.
         if unless is None or not unless(result):
