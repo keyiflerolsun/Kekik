@@ -93,7 +93,7 @@ def sync_make_cache_key(func, args, kwargs, is_fastapi=False, include_auth=False
             auth_hash = md5(request.headers["authorization"].encode()).hexdigest()
             veri[f"_auth_hash"] = auth_hash
 
-        url = request.url.path.replace("/", "|")
+        url = request.url.path[1:].replace("/", "|")
         return f"{url}|{veri}" if veri else f"{url}"
     except Exception as e:
         # Herhangi bir hata durumunda fallback
@@ -141,7 +141,7 @@ async def make_cache_key(func, args, kwargs, is_fastapi=False, include_auth=Fals
             auth_hash = md5(request.headers["authorization"].encode()).hexdigest()
             veri[f"_auth_hash"] = auth_hash
 
-        url = request.url.path.replace("/", "|")
+        url = request.url.path[1:].replace("/", "|")
         return f"{url}|{veri}" if veri else f"{url}"
     except Exception as e:
         # Herhangi bir hata durumunda fallback
