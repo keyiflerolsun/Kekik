@@ -4,6 +4,7 @@ from .cli         import konsol
 from functools    import wraps
 from hashlib      import md5
 from urllib.parse import urlencode
+from inspect      import signature
 import time
 import threading
 import asyncio
@@ -32,7 +33,7 @@ def normalize_for_key(value):
     - Basit tipler (int, float, str, bool, None) doğrudan kullanılır.
     - dict: Anahtarları sıralı olarak normalize eder.
     - list/tuple: Elemanları normalize eder.
-    - Diğer: Sadece sınıf ismi kullanılır.
+    - Diğer: Sadece sınıf ismi kullanılır (karşılaştırılabilir objeler için).
     """
     if isinstance(value, (int, float, str, bool, type(None))):
         return value
@@ -44,18 +45,41 @@ def normalize_for_key(value):
         return [normalize_for_key(item) for item in value]
 
     else:
+        # Kompleks objeler için: önce __str__ veya __repr__ dene, yoksa class name
+        try:
+            # Eğer obje anlamlı bir string representation'a sahipse kullan
+            str_repr = str(value)
+            # Çok uzun string'leri (>100 karakter) sadece class name'e indir
+            if len(str_repr) < 100 and not str_repr.startswith('<'):
+                return str_repr
+        except:
+            pass
+        
         return value.__class__.__name__
 
 def simple_cache_key(func, args, kwargs) -> str:
     """
     Fonksiyonun tam adı ve parametrelerini kullanarak bir cache key oluşturur.
-    Oluşturulan stringin sonuna MD5 hash eklenebilir.
+    self parametresini hariç tutar (class method'lar için).
     """
     base_key = f"{func.__module__}.{func.__qualname__}"
     base_key = "|".join(base_key.split("."))
 
-    if args:
-        norm_args = [normalize_for_key(arg) for arg in args]
+    # Fonksiyon signature'ını kontrol et ve self/cls parametresini tespit et
+    filtered_args = args
+    try:
+        sig = signature(func)
+        params = list(sig.parameters.keys())
+        # İlk parametre 'self' veya 'cls' ise, args'ın ilk elemanını hariç tut
+        if params and len(params) > 0 and params[0] in ('self', 'cls') and len(args) > 0:
+            filtered_args = args[1:]
+    except (ValueError, TypeError):
+        # signature() başarısız olursa args'ı olduğu gibi kullan
+        pass
+
+    # Sadece filtered_args gerçekten doluysa ekle (boş tuple/list değilse)
+    if filtered_args and len(filtered_args) > 0:
+        norm_args = [normalize_for_key(arg) for arg in filtered_args]
         base_key += f"|{norm_args}"
 
     if kwargs:
