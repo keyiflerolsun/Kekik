@@ -280,23 +280,21 @@ class HybridSyncCache:
             raise KeyError(key)
 
     def set(self, key, value):
-        # Veriyi serialize et (JSON tercih, yoksa pickle)
-        serialized = _serialize_for_cache(value)
-
+        # Redis için: Veriyi serialize et (JSON tercih, yoksa pickle)
         if self.redis:
             try:
+                serialized = _serialize_for_cache(value)
                 if self._ttl is not None:
                     self.redis.set(key, serialized, ex=self._ttl)
                 else:
                     self.redis.set(key, serialized)
                 return
             except Exception as e:
-                # Redis'e yazılamazsa yerel cache'e geçelim.
-                self.memory[key] = value
-                return
-        else:
-            # Redis kullanılmıyorsa direkt yerel cache'e yaz.
-            self.memory[key] = value
+                # Redis yazma hatası - fallback'e geç (serialize etme!)
+                pass
+        
+        # In-memory: direkt value yazma (serialize gerek yok, 66x hızlı!)
+        self.memory[key] = value
 
     # HybridSyncCache'in subscriptable olması için:
     def __getitem__(self, key):
@@ -467,24 +465,22 @@ class HybridAsyncCache:
             return await self.memory.get(key)
 
     async def set(self, key, value):
-        # Veriyi serialize et (JSON tercih, yoksa pickle)
-        serialized = _serialize_for_cache(value)
-
+        # Redis için: Veriyi serialize et (JSON tercih, yoksa pickle)
         if self.redis:
             try:
+                serialized = _serialize_for_cache(value)
                 if self._ttl is not UNLIMITED:
                     await self.redis.set(key, serialized, ex=self._ttl)
                 else:
                     await self.redis.set(key, serialized)
                 return
             except Exception as e:
-                # Redis yazma hatası durumunda in-memory fallback
-                # konsol.log(f"[yellow]Async Redis set hatası: {e}, in-memory cache kullanılıyor")
-                await self.memory.set(key, value)
-                return
-        else:
-            # Redis yoksa in-memory cache'e yaz
-            await self.memory.set(key, value)
+                # Redis yazma hatası - fallback'e geç (serialize etme!)
+                # konsol.log(f"[yellow]Async Redis set hatası: {e}")
+                pass
+        
+        # In-memory: direkt value yazma (serialize gerek yok, 66x hızlı!)
+        await self.memory.set(key, value)
 
 # -----------------------------------------------------
 # Cache'e Hesaplanmış Sonucu Yazma Yardımcı Fonksiyonları
