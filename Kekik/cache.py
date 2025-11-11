@@ -45,7 +45,7 @@ def _serialize_for_cache(value):
     """
     if _is_json_serializable(value):
         # JSON: 0x01 marker + json_data
-        json_bytes = json.dumps(value).encode('utf-8')
+        json_bytes = json.dumps(value, ensure_ascii=False, sort_keys=True).encode('utf-8')
         return b'\x01' + json_bytes
     else:
         # Pickle: 0x02 marker + pickle_data
