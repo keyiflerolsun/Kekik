@@ -37,16 +37,16 @@ class StreamDecoder:
         joined = ''.join(value_parts)
         reversed_value = joined[::-1]
 
-        # Base64 çözümlemesi
-        decoded_bytes = base64.b64decode(reversed_value)
-        decoded_text  = decoded_bytes.decode("latin1")
-
         # ROT13 çözümlemesi
-        rot_text = StreamDecoder._rot13(decoded_text)
+        rot_text = StreamDecoder._rot13(reversed_value)
+
+        # Base64 çözümlemesi
+        decoded_bytes = base64.b64decode(rot_text)
+        decoded_text  = decoded_bytes.decode("latin1")
 
         # index'e göre karakter kaydırma
         output_chars = []
-        for index, ch in enumerate(rot_text):
+        for index, ch in enumerate(decoded_text):
             code = ord(ch)
             shift = StreamDecoder.SHIFT_CONST % (index + 5)
             restored = (code - shift + 256) % 256
@@ -67,15 +67,15 @@ class StreamDecoder:
         # Karakterleri birleştir
         mixed_text = ''.join(mixed_chars)
 
-        # ROT13 şifrelemesi
-        rot_text = StreamDecoder._rot13(mixed_text)
-
         # Base64 şifrelemesi
-        encoded_bytes = rot_text.encode("latin1")
+        encoded_bytes = mixed_text.encode("latin1")
         base64_text   = base64.b64encode(encoded_bytes).decode("latin1")
 
+        # ROT13 şifrelemesi
+        rot_text = StreamDecoder._rot13(base64_text)
+
         # Metni ters çevir
-        reversed_text = base64_text[::-1]
+        reversed_text = rot_text[::-1]
 
         # Belirtilen uzunlukta parçalara ayır
         return [
