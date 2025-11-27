@@ -1,9 +1,9 @@
 # ! Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-import re, base64
+import re, base64, itertools
 
 class StreamDecoder:
-    """ Stream tabanlı şifreleme ve çözme işlemleri için yardımcı sınıf. """
+    """ Stream tabanlı şifrelenmiş parçaları brute-force yöntemiyle çözmek için sınıf. """
 
     # Sabit kaydırma değeri
     SHIFT_CONST = 399756995
@@ -26,62 +26,93 @@ class StreamDecoder:
                 transformed_chars.append(rotated)
 
             else:
-                # Harf değilse direkt ekle
+                # Harf değilse olduğu gibi ekle
                 transformed_chars.append(char)
 
         return ''.join(transformed_chars)
 
     @staticmethod
-    def decrypt(value_parts: list[str]) -> str:
-        # Parçaları birleştir ve ters çevir
-        joined = ''.join(value_parts)
-        reversed_value = joined[::-1]
+    def _reverse(text: str) -> str:
+        # Metni ters çevir
+        return text[::-1]
 
-        # ROT13 çözümlemesi
-        rot_text = StreamDecoder._rot13(reversed_value)
-
-        # Base64 çözümlemesi
-        decoded_bytes = base64.b64decode(rot_text)
-        decoded_text  = decoded_bytes.decode("latin1")
-
-        # index'e göre karakter kaydırma
+    @staticmethod
+    def _shift_back(text: str) -> str:
+        # Her karakterin ASCII değerini pozisyona bağlı olarak kaydırarak geri al
         output_chars = []
-        for index, ch in enumerate(decoded_text):
-            code = ord(ch)
-            shift = StreamDecoder.SHIFT_CONST % (index + 5)
+        for index, ch in enumerate(text):
+            code     = ord(ch)
+            shift    = StreamDecoder.SHIFT_CONST % (index + 5)
             restored = (code - shift + 256) % 256
             output_chars.append(chr(restored))
 
         return ''.join(output_chars)
 
     @staticmethod
-    def encrypt(plain_text: str, split_length: int = 10) -> list[str]:
-        # Karakterleri karıştır
-        mixed_chars = []
-        for index, ch in enumerate(plain_text):
-            code = ord(ch)
-            shift = StreamDecoder.SHIFT_CONST % (index + 5)
-            new_code = (code + shift) % 256
-            mixed_chars.append(chr(new_code))
+    def _base64_decode(text: str):
+        # Base64 çözme işlemi
+        try:
+            decoded_bytes = base64.b64decode(text)
+            return decoded_bytes.decode("latin1")
+        except Exception:
+            return None
 
-        # Karakterleri birleştir
-        mixed_text = ''.join(mixed_chars)
+    @staticmethod
+    def _brute_force(value_parts: list[str]):
+        """
+        value_parts dizisini 24 farklı sıralamada çözer.
+        En okunabilir (printable) sonuca göre en olası doğru çözümü döndürür.
+        """
 
-        # Base64 şifrelemesi
-        encoded_bytes = mixed_text.encode("latin1")
-        base64_text   = base64.b64encode(encoded_bytes).decode("latin1")
+        joined = ''.join(value_parts)   # ! Parçaları birleştir
 
-        # ROT13 şifrelemesi
-        rot_text = StreamDecoder._rot13(base64_text)
+        # ! Kullanılan işlem adımları
+        operations = {
+            "B64D": StreamDecoder._base64_decode,
+            "ROT" : StreamDecoder._rot13,
+            "REV" : StreamDecoder._reverse,
+            "SHF" : StreamDecoder._shift_back,
+        }
 
-        # Metni ters çevir
-        reversed_text = rot_text[::-1]
+        results = []
 
-        # Belirtilen uzunlukta parçalara ayır
-        return [
-            reversed_text[i:i + split_length]
-                for i in range(0, len(reversed_text), split_length)
-        ]
+        # ! 24 farklı sıralamayı dene
+        for order in itertools.permutations(operations.keys()):
+
+            text = joined
+            valid = True
+
+            # Sıradaki her fonksiyonu uygula
+            for op_name in order:
+                func = operations[op_name]
+                text = func(text)
+
+                # Eğer bir adım çökerse bu sıra geçersizdir
+                if text is None:
+                    valid = False
+                    break
+
+            if valid:
+                # ! Okunabilirlik oranı hesapla
+                printable = sum(1 for c in text if 32 <= ord(c) <= 126)
+                ratio = printable / max(1, len(text))
+
+                results.append((order, text, ratio))
+
+        # ! Sonuçları en okunabilirden başlayarak sırala
+        results.sort(key=lambda x: x[2], reverse=True)
+
+        # ! İlk 10 olası sonucu ekrana dökelim
+        # print("\n### Olası Çözümler ###\n")
+        # for order, text, ratio in results[:10]:
+        #     print(f"Sıra: {' → '.join(order)} | Okunabilirlik: %{ratio*100:.1f}")
+        #     print(f"Çözüm: {text}\n" + "-" * 60)
+
+        # ! En iyi sonucu döndür
+        if results:
+            return results[0][1]
+
+        return None
 
     @staticmethod
     def extract_stream_url(script_text: str) -> str:
@@ -112,4 +143,5 @@ class StreamDecoder:
             raise Exception("array string parçaları bulunamadı")
 
         # 4) Decode et
-        return StreamDecoder.decrypt(parts)
+        return StreamDecoder._brute_force(parts)
+
