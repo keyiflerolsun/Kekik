@@ -1,9 +1,9 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from .cli         import konsol
-from functools    import wraps
-from hashlib      import md5
-from inspect      import signature
+from .cli      import konsol
+from functools import wraps
+from hashlib   import md5
+from inspect   import signature
 import json
 import time
 import threading
@@ -126,7 +126,7 @@ def simple_cache_key(func, args, kwargs) -> str:
     self parametresini hariç tutar (class method'lar için).
     """
     base_key = f"{func.__module__}.{func.__qualname__}"
-    base_key = "|".join(base_key.split("."))
+    base_key = ":".join(base_key.split("."))
 
     # Fonksiyon signature'ını kontrol et ve self/cls parametresini tespit et
     filtered_args = args
@@ -143,14 +143,14 @@ def simple_cache_key(func, args, kwargs) -> str:
     # Sadece filtered_args gerçekten doluysa ekle (boş tuple/list değilse)
     if filtered_args and len(filtered_args) > 0:
         norm_args = [normalize_for_key(arg) for arg in filtered_args]
-        base_key += f"|{norm_args}"
+        base_key += f":{norm_args}"
 
     if kwargs:
         norm_kwargs = {k: normalize_for_key(v) for k, v in kwargs.items()}
-        base_key   += f"|{str(sorted(norm_kwargs.items()))}"
+        base_key   += f":{str(sorted(norm_kwargs.items()))}"
 
     hashed = md5(base_key.encode('utf-8')).hexdigest()
-    return f"{base_key}"  # |{hashed}
+    return f"{base_key}"  # :{hashed}
 
 # -----------------------------------------------------
 # Senkron Cache (RAM) Sınıfı
