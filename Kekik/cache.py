@@ -223,11 +223,12 @@ class SyncCache:
             # Kapasite kontrolü - LRU temizlemesi
             if len(self._data) >= self._max_size and key not in self._data:
                 # En az kullanılan key'i bul ve sil
-                lru_key = min(self._access_counts, key=self._access_counts.get)
-                self._data.pop(lru_key, None)
-                self._times.pop(lru_key, None)
-                self._access_counts.pop(lru_key, None)
-                # konsol.log(f"[red][-] LRU eviction: {lru_key}")
+                if self._access_counts:
+                    lru_key = min(self._access_counts, key=self._access_counts.get)
+                    self._data.pop(lru_key, None)
+                    self._times.pop(lru_key, None)
+                    self._access_counts.pop(lru_key, None)
+                    # konsol.log(f"[red][-] LRU eviction: {lru_key}")
 
             self._data[key]          = value
             self._access_counts[key] = 0
@@ -383,12 +384,14 @@ class AsyncCache:
         except KeyError:
             # Eğer key cache'de yoksa, aynı key ile başlatılmış future varsa onu bekle.
             future = self.futures.get(key)
-            if future:
-                await future
-                # Future tamamlandığında sonucu döndür.
-                value = future.result()
-                # konsol.log(f"[yellow][?] {str(key)[:100]}")
-                return value
+            if future and not future.done():
+                try:
+                    # await future zaten sonucu döndürür
+                    value = await future
+                    # konsol.log(f"[yellow][?] {str(key)[:100]}")
+                    return value
+                except asyncio.CancelledError:
+                    pass  # Future iptal edilmişse KeyError fırlat
             # Eğer future da yoksa, key bulunamadığına dair hata fırlat.
             raise KeyError(key)
 
@@ -399,12 +402,13 @@ class AsyncCache:
         # Kapasite kontrolü - LRU temizlemesi
         if len(self._data) >= self._max_size and key not in self._data:
             # En az kullanılan key'i bul ve sil
-            lru_key = min(self._access_counts, key=self._access_counts.get)
-            self._data.pop(lru_key, None)
-            self._times.pop(lru_key, None)
-            self._access_counts.pop(lru_key, None)
-            self.futures.pop(lru_key, None)
-            # konsol.log(f"[red][-] Async LRU eviction: {lru_key}")
+            if self._access_counts:
+                lru_key = min(self._access_counts, key=self._access_counts.get)
+                self._data.pop(lru_key, None)
+                self._times.pop(lru_key, None)
+                self._access_counts.pop(lru_key, None)
+                self.futures.pop(lru_key, None)
+                # konsol.log(f"[red][-] Async LRU eviction: {lru_key}")
 
         self._data[key]          = value
         self._access_counts[key] = 0
