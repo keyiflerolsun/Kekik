@@ -60,8 +60,9 @@ class StreamDecoder:
     @staticmethod
     def _brute_force(value_parts: list[str]):
         """
-        value_parts dizisini 24 farklı sıralamada çözer.
-        En okunabilir (printable) sonuca göre en olası doğru çözümü döndürür.
+        value_parts dizisini tüm olası işlem kombinasyonlarında çözer.
+        Tekrarlı işlemler dahil (örn: B64D → B64D gibi) 1-6 uzunluğundaki
+        tüm sıralamaları dener ve en okunabilir sonucu döndürür.
         """
 
         joined = ''.join(value_parts)   # ! Parçaları birleştir
@@ -74,30 +75,34 @@ class StreamDecoder:
             "SHF" : StreamDecoder._shift_back,
         }
 
+        op_keys = list(operations.keys())
         results = []
 
-        # ! 24 farklı sıralamayı dene
-        for order in itertools.permutations(operations.keys()):
+        # ! 1-6 uzunluğundaki TÜM kombinasyonları dene (tekrarlı işlemler dahil)
+        for length in range(1, 7):
+            for order in itertools.product(op_keys, repeat=length):
 
-            text = joined
-            valid = True
+                text  = joined
+                valid = True
 
-            # Sıradaki her fonksiyonu uygula
-            for op_name in order:
-                func = operations[op_name]
-                text = func(text)
+                # Sıradaki her fonksiyonu uygula
+                for op_name in order:
+                    func = operations[op_name]
+                    text = func(text)
 
-                # Eğer bir adım çökerse bu sıra geçersizdir
-                if text is None:
-                    valid = False
-                    break
+                    # Eğer bir adım çökerse bu sıra geçersizdir
+                    if text is None:
+                        valid = False
+                        break
 
-            if valid:
-                # ! Okunabilirlik oranı hesapla
-                printable = sum(1 for c in text if 32 <= ord(c) <= 126)
-                ratio = printable / max(1, len(text))
+                if valid and text:
+                    # ! Okunabilirlik oranı hesapla
+                    printable = sum(1 for c in text if 32 <= ord(c) <= 126)
+                    ratio     = printable / max(1, len(text))
 
-                results.append((order, text, ratio))
+                    # ! Sadece makul okunabilirlik oranına sahip sonuçları ekle
+                    if ratio > 0.5:
+                        results.append((order, text, ratio))
 
         # ! Sonuçları en okunabilirden başlayarak sırala
         results.sort(key=lambda x: x[2], reverse=True)
