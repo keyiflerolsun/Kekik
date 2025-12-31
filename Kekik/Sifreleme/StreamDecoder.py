@@ -30,35 +30,42 @@ class StreamDecoder:
     def _parse_operations(self) -> list[str]:
         """
         JS kodundan işlem sırasını dinamik olarak parse eder.
-        Desteklenen işlemler: reverse, atob (base64), shift
+        Desteklenen işlemler: reverse, atob (base64), rot13, shift
         """
-        # Fonksiyon gövdesini bul
-        fn_match = re.search(
-            r'function\s+\w+\s*\(\s*value_parts\s*\)\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}',
-            self.script_text
-        )
-        if not fn_match:
+        # Fonksiyon başlangıcını bul
+        fn_start = re.search(r'function\s+\w+\s*\(\s*value_parts\s*\)\s*\{', self.script_text)
+        if not fn_start:
             return ["reverse", "base64", "base64", "shift"]
+        
+        # Nested braces'i sayarak fonksiyon gövdesini çıkar
+        start_pos = fn_start.end()
+        brace_count = 1
+        pos = start_pos
 
-        fn_body    = fn_match.group(1)
+        while pos < len(self.script_text) and brace_count > 0:
+            if self.script_text[pos] == '{':
+                brace_count += 1
+            elif self.script_text[pos] == '}':
+                brace_count -= 1
+            pos += 1
+
+        fn_body = self.script_text[start_pos:pos-1]
         operations = []
 
-        # İşlemleri sırasıyla tespit et
-        # split('').reverse().join('') -> reverse
-        # atob(...) -> base64
-        # charCode-(CONST%(i+N)) -> shift
-
-        # Satır satır analiz et
-        statements = fn_body.split(';')
-        for stmt in statements:
-            stmt = stmt.strip()
-
-            if "split('')" in stmt and "reverse()" in stmt and "join('')" in stmt:
-                operations.append("reverse")
-            elif "atob(" in stmt:
-                operations.append("base64")
-            elif "charCode" in stmt and "%" in stmt:
-                operations.append("shift")
+        # İşlemleri tespit et
+        if "atob(" in fn_body:
+            operations.append("base64")
+        
+        if "replace(/[a-zA-Z]/g" in fn_body and "charCodeAt(0)+13" in fn_body:
+            operations.append("rot13")
+        
+        if (".split('')" in fn_body or '.split("")' in fn_body) and \
+           ".reverse()" in fn_body and \
+           (".join('')" in fn_body or '.join("")' in fn_body):
+            operations.append("reverse")
+        
+        if "for(" in fn_body and "charCode" in fn_body and "%" in fn_body:
+            operations.append("shift")
 
         return operations if operations else ["reverse", "base64", "base64", "shift"]
 
@@ -96,15 +103,34 @@ class StreamDecoder:
             return base64.b64decode(text).decode("latin1")
         except Exception:
             return text
+    
+    def _rot13_decode(self, text: str) -> str:
+        """ROT13 decode (Caesar cipher with shift of 13)"""
+        result = []
+        for char in text:
+            if 'a' <= char <= 'z':
+                result.append(chr((ord(char) - ord('a') + 13) % 26 + ord('a')))
+            elif 'A' <= char <= 'Z':
+                result.append(chr((ord(char) - ord('A') + 13) % 26 + ord('A')))
+            else:
+                result.append(char)
+        return ''.join(result)
 
     def _shift_unmix(self, text: str) -> str:
         """Pozisyon bazlı shift ile decode"""
         output = []
         for i, ch in enumerate(text):
             char_code = ord(ch)
-            char_code = (char_code - (self.shift_const % (i + 5)) + 256) % 256
-            output.append(chr(char_code))
-        return ''.join(output)
+            shifted = (char_code - (self.shift_const % (i + 5)) + 256) % 256
+            output.append(shifted)
+        
+        try:
+            return bytes(output).decode('utf-8', errors='ignore')
+        except Exception:
+            try:
+                return bytes(output).decode('latin1')
+            except Exception:
+                return bytes(output).decode('ascii', errors='ignore')
 
     def decode(self) -> str:
         """Parse edilen işlemleri sırasıyla uygula"""
@@ -115,6 +141,8 @@ class StreamDecoder:
                 result = self._reverse(result)
             elif op == "base64":
                 result = self._base64_decode(result)
+            elif op == "rot13":
+                result = self._rot13_decode(result)
             elif op == "shift":
                 result = self._shift_unmix(result)
 
