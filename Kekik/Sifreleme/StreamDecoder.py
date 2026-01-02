@@ -30,7 +30,7 @@ class StreamDecoder:
     def _parse_operations(self) -> list[str]:
         """
         JS kodundan işlem sırasını dinamik olarak parse eder.
-        Desteklenen işlemler: reverse, atob (base64), rot13, shift
+        Statement bazlı analiz yaparak gerçek sırayı tespit eder.
         """
         # Fonksiyon başlangıcını bul
         fn_start = re.search(r'function\s+\w+\s*\(\s*value_parts\s*\)\s*\{', self.script_text)
@@ -50,23 +50,48 @@ class StreamDecoder:
             pos += 1
 
         fn_body = self.script_text[start_pos:pos-1]
+        
+        # Statement'lara ayır (;'e göre)
+        statements = fn_body.split(';')
         operations = []
-
-        # İşlemleri tespit et
-        if "atob(" in fn_body:
-            operations.append("base64")
         
-        if "replace(/[a-zA-Z]/g" in fn_body and "charCodeAt(0)+13" in fn_body:
-            operations.append("rot13")
+        for stmt in statements:
+            stmt = stmt.strip()
+            if not stmt:
+                continue
+            
+            # Reverse işlemi: .split('').reverse().join('')
+            if '.reverse()' in stmt and '.split(' in stmt and '.join(' in stmt:
+                operations.append("reverse")
+                continue
+            
+            # Sadece reverse (split-join olmadan)
+            if '.reverse()' in stmt and '.split(' not in stmt:
+                operations.append("reverse")
+                continue
+            
+            # Base64 decode: atob(...)
+            # Bir statement'ta birden fazla atob olabilir
+            atob_count = stmt.count('atob(')
+            for _ in range(atob_count):
+                operations.append("base64")
+            if atob_count > 0:
+                continue
+            
+            # ROT13: replace ile charCodeAt(0)+13 veya -13
+            if 'replace(' in stmt and ('charCodeAt(0)+13' in stmt or 'charCodeAt(0)-13' in stmt):
+                operations.append("rot13")
+                continue
+            
+            # Shift unmix: for loop içinde charCode manipülasyonu
+            if 'for(' in stmt and 'charCode' in stmt and '%' in stmt:
+                operations.append("shift")
+                continue
         
-        if (".split('')" in fn_body or '.split("")' in fn_body) and \
-           ".reverse()" in fn_body and \
-           (".join('')" in fn_body or '.join("")' in fn_body):
-            operations.append("reverse")
-        
-        if "for(" in fn_body and "charCode" in fn_body and "%" in fn_body:
+        # Eğer for loop ayrı statement olarak algılanmadıysa, fn_body'de ara
+        if 'shift' not in operations and 'for(' in fn_body and 'charCode' in fn_body:
             operations.append("shift")
-
+        
         return operations if operations else ["reverse", "base64", "base64", "shift"]
 
     def _extract_parts(self) -> list[str]:
@@ -98,9 +123,20 @@ class StreamDecoder:
         return text[::-1]
 
     def _base64_decode(self, text: str) -> str:
-        """Base64 decode"""
+        """
+        Base64 decode - JavaScript atob() davranışını taklit eder.
+        Her byte'ı direkt karaktere çevirir (chr(byte)), latin1 decode kullanmaz.
+        Bu, double base64 decode işlemlerinin düzgün çalışmasını sağlar.
+        """
         try:
-            return base64.b64decode(text).decode("latin1")
+            # Padding ekle (JS atob padding gerektirmez ama Python gerektirir)
+            padding = 4 - len(text) % 4
+            if padding != 4:
+                text += '=' * padding
+            
+            decoded_bytes = base64.b64decode(text)
+            # JS atob davranışı: her byte'ı direkt karaktere çevir
+            return ''.join(chr(b) for b in decoded_bytes)
         except Exception:
             return text
     
