@@ -131,7 +131,8 @@ def _wrap_async(
             return result
 
         except Exception as exc:
-            future.cancel()
+            if not future.done():
+                future.set_exception(exc)
             raise exc
 
         finally:

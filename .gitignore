@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 bakalim.py
+uv.lock
