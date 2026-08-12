@@ -1,6 +1,6 @@
 [project]
 name        = "Kekik"
-version     = "1.9.8"
+version     = "1.9.9"
 description = "İşlerimizi kolaylaştıracak fonksiyonların el altında durduğu kütüphane.."
 keywords    = ["Kekik", "KekikAkademi", "keyiflerolsun"]
 license     = { text = "GPLv3+" }
