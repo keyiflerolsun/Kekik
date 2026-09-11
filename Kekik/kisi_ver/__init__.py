@@ -6,8 +6,8 @@ from Kekik.kisi_ver.soyisimler   import en_soyisimler, tr_soyisimler
 from Kekik.kisi_ver.biyografiler import en_biyografiler, tr_biyografiler
 from random                      import choice, randint
 # from thispersondoesnotexist      import save_online_person
-from Kekik                       import slugify
-from pathlib                     import Path
+from Kekik   import slugify
+from pathlib import Path
 
 async def kisi_ver(dil:Literal["tr", "en"], dizin:str="tmp") -> dict[str, str]:
     match dil:

@@ -1,4 +1,4 @@
-# ! Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
@@ -28,14 +28,14 @@ class CryptoJS:
             hasher = hashlib.new(hash_algorithm)
             if block:
                 hasher.update(block)
-    
+
             hasher.update(password)
             hasher.update(salt)
             block = hasher.digest()
 
             for _ in range(1, iterations):
                 block = hashlib.new(hash_algorithm, block).digest()
-    
+
             derived_bytes += block
 
         return derived_bytes[:key_size], derived_bytes[key_size:key_size + iv_size]

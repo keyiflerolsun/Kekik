@@ -1,4 +1,4 @@
-# ! Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 from json                import loads, dumps
 from Crypto.Hash         import MD5
@@ -44,7 +44,7 @@ class AESManager:
 
         cipher   = AES.new(key, AES.MODE_CBC, iv)
         ct_bytes = cipher.encrypt(pad(plain_text.encode("utf-8"), AES.block_size))
-        
+
         return dumps({
             "ct" : b64encode(ct_bytes).decode("utf-8"),
             "iv" : iv.hex(),
@@ -57,7 +57,7 @@ class AESManager:
         data = loads(crypted_data)
         salt = AESManager.hex_to_bytes(data["s"])
         iv   = AESManager.hex_to_bytes(data["iv"])
-        
+
         key, iv = AESManager.generate_key_and_iv(password, salt, iv_length=len(iv))
 
         cipher    = AES.new(key, AES.MODE_CBC, iv)

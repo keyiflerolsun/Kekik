@@ -1,6 +1,6 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from os         import name as sistem
+from os         import name as sistem, system
 from subprocess import check_output, STDOUT
 from requests   import get
 from uuid       import uuid5, NAMESPACE_DNS
@@ -14,12 +14,11 @@ def benim_hwid() -> str:
         benim_hwid = str2uuid(check_output("wmic csproduct get uuid").decode().split("\n")[1])
     else:
         try:
-            from GPUtil import getGPUs
+            from GPUtil import getGPUs  # noqa: lazy — opsiyonel bağımlılık, eksikse aşağıda pip ile kurulup tekrar import ediliyor
         except ModuleNotFoundError:
-            from os import system
             system("pip3 install gputil")
             system("clear")
-            from GPUtil import getGPUs
+            from GPUtil import getGPUs  # noqa: lazy — üstteki pip install sonrası ilk kez içeri alınıyor
 
         if ekran_kartlari := getGPUs():
             benim_hwid = str2uuid(ekran_kartlari[0].uuid[4:])

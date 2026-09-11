@@ -1,12 +1,6 @@
-# -*- coding: utf8 -*-
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-try:
-    __instance__ = unicode
-except:
-    __instance__ = str
-
-
-class unicode_tr(__instance__):
+class unicode_tr(str):
     CHARMAP = {
         "to_upper": {
             u"ı": u"I",
@@ -22,16 +16,16 @@ class unicode_tr(__instance__):
         for key, value in self.CHARMAP.get("to_lower").items():
             self = self.replace(key, value)
 
-        return unicode_tr(getattr(__instance__, "lower")(self))
+        return unicode_tr(str.lower(self))
 
     def upper(self):
         for key, value in self.CHARMAP.get("to_upper").items():
             self = self.replace(key, value)
 
-        return unicode_tr(getattr(__instance__, "upper")(self))
+        return unicode_tr(str.upper(self))
 
     def replace(self, *args, **kwargs):
-        return unicode_tr(getattr(__instance__, "replace")(self, args[0], args[1]))
+        return unicode_tr(str.replace(self, args[0], args[1]))
 
     def capitalize(self):
         first, rest = self[0], self[1:]

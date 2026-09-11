@@ -1,3 +1,5 @@
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+
 # https://github.com/Skuzzy_xD/TelePyroBot
 
 def okunabilir_byte(boyut: int) -> str:
@@ -18,7 +20,7 @@ def okunabilir_byte(boyut: int) -> str:
     # 2**10 = 1024
     binyirmidort = 2 ** 10
 
-    say = 0
+    say          = 0
     cikti_sozluk = {0: " ", 1: "K", 2: "M", 3: "G", 4: "T"}
 
     while boyut > binyirmidort:

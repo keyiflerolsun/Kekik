@@ -9,16 +9,14 @@ from gtts               import gTTS
 from playsound          import playsound
 from os                 import system, remove
 from pydub              import AudioSegment
-import ffmpeg
+import ffmpeg, os, sys, contextlib
 
 def ses2yazi(n_saniye_dinle:int | None, bip:bool=True) -> str:
     dinleyici = Recognizer()
 
-    import os, sys, contextlib
-
     @contextlib.contextmanager
     def ignore_stderr():
-        devnull = os.open(os.devnull, os.O_WRONLY)
+        devnull    = os.open(os.devnull, os.O_WRONLY)
         old_stderr = os.dup(2)
         sys.stderr.flush()
         os.dup2(devnull, 2)
@@ -102,7 +100,7 @@ def dosya2yazi(dosya_yolu:str) -> None:
     dinleyici = Recognizer()
     with AudioFile(gecici_dosya) as source:
         audio_data = dinleyici.record(source)
-        text = dinleyici.recognize_google(audio_data, language="tr-TR")
+        text       = dinleyici.recognize_google(audio_data, language="tr-TR")
 
     remove(gecici_dosya)
     return text

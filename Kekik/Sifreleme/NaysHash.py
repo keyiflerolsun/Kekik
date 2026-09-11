@@ -36,7 +36,7 @@ class NaysHash:
     def generate_hash_with_hmac256(self, msg:str):
         # Verilen mesaj için HMAC-SHA256 hash oluştur
         hmac256_hash = hmac(
-            key       = self.hmac_key.encode("utf-8"), 
+            key       = self.hmac_key.encode("utf-8"),
             msg       = msg.encode("utf-8"),
             digestmod = sha256
         )

@@ -1,4 +1,4 @@
-# ! Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 import re
 
@@ -69,7 +69,7 @@ class Packer:
                     break
 
         if not match:
-            # Son çare: daha serbest bir string arama 
+            # Son çare: daha serbest bir string arama
             if "'.split('|')" in source or '".split("|")' in source:
                 # Manuel olarak parçalama işlemi yap
                 try:
@@ -125,7 +125,7 @@ class Packer:
             selector = 52
 
         # Alfabeden karakter-indeks sözlüğü oluştur
-        char_dict = {char: idx for idx, char in enumerate(Packer.ALPHABET[selector])}
+        char_dict = {char : idx for idx, char in enumerate(Packer.ALPHABET[selector])}
 
         # Değeri dönüştür
         result = 0
@@ -134,7 +134,7 @@ class Packer:
             result += digit * (base ** index)
 
         return result
-    
+
     @staticmethod
     def lookup_symbol(match: re.Match, symtab: list[str], radix: int) -> str:
         """Sembolleri arar ve yerine koyar."""
@@ -169,7 +169,7 @@ class Packer:
 
             # Kelimeleri değiştir ve sonucu döndür
             return Packer.REPLACE_PATTERN.sub(
-                lambda match: Packer.lookup_symbol(match, symtab, radix), 
+                lambda match: Packer.lookup_symbol(match, symtab, radix),
                 payload
             )
         except Exception as e:

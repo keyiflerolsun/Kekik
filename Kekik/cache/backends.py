@@ -2,14 +2,13 @@
 
 """Cache Backend Sınıfları - In-Memory ve Hybrid"""
 
-from __future__ import annotations
 import asyncio
 import threading
 import time
-from abc import ABC, abstractmethod
+from abc    import ABC, abstractmethod
 from typing import Any
 
-from .redis_pool import get_sync_redis, get_async_redis
+from .redis_pool  import get_sync_redis, get_async_redis
 from .serializers import serialize, deserialize
 
 
@@ -40,12 +39,12 @@ class MemoryCache(BaseCache):
     """
 
     def __init__(self, ttl: int | None = None, max_size: int = 10000):
-        self._ttl      = ttl
-        self._max_size = max_size
-        self._data: dict[str, Any]   = {}
-        self._times: dict[str, float] = {}
-        self._access: dict[str, int]  = {}
-        self._lock = threading.RLock()
+        self._ttl                         = ttl
+        self._max_size                    = max_size
+        self._data     : dict[str, Any]   = {}
+        self._times    : dict[str, float] = {}
+        self._access   : dict[str, int]   = {}
+        self._lock                        = threading.RLock()
 
         # Cleanup thread
         if ttl:
@@ -127,19 +126,19 @@ class AsyncMemoryCache(BaseCache):
     """
 
     def __init__(self, ttl: int | None = None, max_size: int = 10000):
-        self._ttl      = ttl
-        self._max_size = max_size
-        self._data: dict[str, Any]   = {}
-        self._times: dict[str, float] = {}
-        self._access: dict[str, int]  = {}
-        self.futures: dict[str, asyncio.Future] = {}
-        self._cleanup_task: asyncio.Task | None = None
+        self._ttl                                      = ttl
+        self._max_size                                 = max_size
+        self._data         : dict[str, Any]            = {}
+        self._times        : dict[str, float]          = {}
+        self._access       : dict[str, int]            = {}
+        self.futures       : dict[str, asyncio.Future] = {}
+        self._cleanup_task : asyncio.Task | None       = None
 
     def _ensure_cleanup(self) -> None:
         """Cleanup task'in çalıştığından emin ol."""
         if self._cleanup_task is None and self._ttl:
             try:
-                loop = asyncio.get_running_loop()
+                loop               = asyncio.get_running_loop()
                 self._cleanup_task = loop.create_task(self._cleanup_loop())
             except RuntimeError:
                 pass
@@ -219,9 +218,9 @@ class HybridCache(BaseCache):
     """
 
     def __init__(self, ttl: int | None = None, max_size: int = 10000):
-        self._ttl = ttl
-        self._memory = MemoryCache(ttl, max_size)
-        self._redis_available: bool | None = None
+        self._ttl                           = ttl
+        self._memory                        = MemoryCache(ttl, max_size)
+        self._redis_available : bool | None = None
 
     def _get_redis(self):
         """Redis client al, availability'yi cache'le."""
@@ -282,11 +281,11 @@ class AsyncHybridCache(BaseCache):
     """
 
     def __init__(self, ttl: int | None = None, max_size: int = 10000):
-        self._ttl = ttl
-        self._memory = AsyncMemoryCache(ttl, max_size)
-        self._redis_available: bool | None = None
-        self._redis_client = None
-        self.futures = self._memory.futures  # Decorator için
+        self._ttl                           = ttl
+        self._memory                        = AsyncMemoryCache(ttl, max_size)
+        self._redis_available : bool | None = None
+        self._redis_client                  = None
+        self.futures                        = self._memory.futures  # Decorator için
 
     async def _get_redis(self):
         """Redis client al, availability'yi cache'le."""
@@ -294,7 +293,7 @@ class AsyncHybridCache(BaseCache):
             return None
 
         if self._redis_client is None:
-            self._redis_client = await get_async_redis()
+            self._redis_client    = await get_async_redis()
             self._redis_available = self._redis_client is not None
 
         return self._redis_client

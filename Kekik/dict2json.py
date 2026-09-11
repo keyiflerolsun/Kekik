@@ -16,7 +16,7 @@ def dict2json(sozluk:dict, liste_key:str, dosya_adi:str) -> bool:
     --------
     ```
     dict2json(
-        sozluk    = {
+        sozluk = {
             'id'            : 1,
             'kullanici_adi' : "@keyiflerolsun",
             'ad_soyad'      : "Ömer Faruk Sancak"

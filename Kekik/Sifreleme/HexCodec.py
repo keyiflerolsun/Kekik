@@ -1,3 +1,5 @@
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+
 class HexCodec:
     @staticmethod
     def encode(utf8_string: str) -> str:

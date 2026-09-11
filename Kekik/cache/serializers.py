@@ -2,12 +2,11 @@
 
 """Serileştirme ve Cache Key Yardımcıları"""
 
-from __future__ import annotations
 import json
 import pickle
-from hashlib import md5
-from inspect import signature
-from typing import Any, Callable
+from collections.abc import Callable
+from inspect         import signature
+from typing          import Any
 
 # -----------------------------------------------------
 # Serileştirme Sabitleri
@@ -31,7 +30,7 @@ def is_json_serializable(value: Any) -> bool:
 def serialize(value: Any) -> bytes:
     """
     Veriyi cache için serialize eder.
-    
+
     Format:
         - JSON:   0x01 + json_bytes
         - Pickle: 0x02 + pickle_bytes
@@ -75,7 +74,7 @@ def normalize_value(value: Any) -> Any:
 
     # Dict: Anahtarları sırala
     if isinstance(value, dict):
-        return {k: normalize_value(v) for k, v in sorted(value.items())}
+        return {k : normalize_value(v) for k, v in sorted(value.items())}
 
     # List/Tuple: Elemanları normalize et
     if isinstance(value, (list, tuple)):
@@ -108,7 +107,7 @@ def _filter_self_from_args(func: Callable, args: tuple) -> tuple:
 def make_cache_key(func: Callable, args: tuple, kwargs: dict) -> str:
     """
     Fonksiyon ve parametrelerden benzersiz cache key oluşturur.
-    
+
     Format: module:class:method:[args]:[kwargs]
     """
     # Base key: module:qualname
@@ -125,7 +124,7 @@ def make_cache_key(func: Callable, args: tuple, kwargs: dict) -> str:
 
     # Kwargs ekle
     if kwargs:
-        norm_kwargs = {k: normalize_value(v) for k, v in kwargs.items()}
+        norm_kwargs = {k : normalize_value(v) for k, v in kwargs.items()}
         base_key += f":{sorted(norm_kwargs.items())}"
 
     return base_key

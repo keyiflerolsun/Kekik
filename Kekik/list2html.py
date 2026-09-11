@@ -1,9 +1,8 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 from tabulate import tabulate
-from typing   import List, Dict
 
-def list2html(title:str, tablo_veri:List[Dict], header:str="", aciklama:str="", footer:str="", pdf_sayfa:str="A4", sayfalama:bool=True) -> str:
+def list2html(title:str, tablo_veri:list[dict], header:str="", aciklama:str="", footer:str="", pdf_sayfa:str="A4", sayfalama:bool=True) -> str:
     tablo_html = tabulate(tablo_veri, headers="keys", tablefmt="html")
 
     css = """<style>
@@ -20,19 +19,19 @@ def list2html(title:str, tablo_veri:List[Dict], header:str="", aciklama:str="", 
                     dom: 'Bfrtip',
                     paging: false,
                     language: {
-                        "emptyTable": "Tabloda veri yok",
-                        "lengthMenu": "Sayfa başına _MENU_ kaydı görüntüle",
-                        "zeroRecords": "Hiçbir eşleşen kayıt bulunamadı",
+                        "emptyTable"  : "Tabloda veri yok",
+                        "lengthMenu"  : "Sayfa başına _MENU_ kaydı görüntüle",
+                        "zeroRecords" : "Hiçbir eşleşen kayıt bulunamadı",
                         // "info": "_TOTAL_ girişten _START_ - _END_ arası gösteriliyor",
-                        "info": "_TOTAL_ Kayıt Mevcut",
-                        "infoEmpty": "Kayıt yok",
-                        "infoFiltered": "(Toplam _MAX_ kayıttan filtrelenmiştir)",
-                        "search": "Ara:",
-                        "paginate": {
-                            "first":      "İlk",
-                            "last":       "Son",
-                            "next":       "İleri",
-                            "previous":   "Geri"
+                        "info"         : "_TOTAL_ Kayıt Mevcut",
+                        "infoEmpty"    : "Kayıt yok",
+                        "infoFiltered" : "(Toplam _MAX_ kayıttan filtrelenmiştir)",
+                        "search"       : "Ara:",
+                        "paginate"     : {
+                            "first"        : "İlk",
+                            "last"         : "Son",
+                            "next"         : "İleri",
+                            "previous"     : "Geri"
                         },
                     },
                     columnDefs: [

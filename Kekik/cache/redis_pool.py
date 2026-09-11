@@ -2,7 +2,6 @@
 
 """Redis Connection Pool Yönetimi - Singleton Pattern"""
 
-from __future__ import annotations
 import atexit
 import threading
 from typing import TYPE_CHECKING
@@ -11,7 +10,7 @@ import redis
 import redis.asyncio as redis_async
 
 if TYPE_CHECKING:
-    from redis import ConnectionPool
+    from redis         import ConnectionPool
     from redis.asyncio import ConnectionPool as AsyncConnectionPool
 
 # -----------------------------------------------------
@@ -19,13 +18,13 @@ if TYPE_CHECKING:
 # -----------------------------------------------------
 class RedisConfig:
     """Redis bağlantı ayarları."""
-    HOST: str            = "127.0.0.1"
-    PORT: int            = 6379
-    DB: int              = 0
-    PASSWORD: str | None = None
-    MAX_CONNECTIONS: int = 50
-    SOCKET_TIMEOUT: int  = 5
-    HEALTH_CHECK: int    = 30
+    HOST            : str        = "127.0.0.1"
+    PORT            : int        = 6379
+    DB              : int        = 0
+    PASSWORD        : str | None = None
+    MAX_CONNECTIONS : int        = 50
+    SOCKET_TIMEOUT  : int        = 5
+    HEALTH_CHECK    : int        = 30
 
 
 # -----------------------------------------------------
@@ -36,10 +35,10 @@ class RedisPoolManager:
     Redis ConnectionPool yönetimi için singleton sınıf.
     Thread-safe ve lazy initialization destekler.
     """
-    _instance: RedisPoolManager | None = None
-    _lock = threading.Lock()
+    _instance : "RedisPoolManager | None" = None
+    _lock                                 = threading.Lock()
 
-    def __new__(cls) -> RedisPoolManager:
+    def __new__(cls) -> "RedisPoolManager":
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -49,10 +48,10 @@ class RedisPoolManager:
 
     def _init_pools(self) -> None:
         """Pool değişkenlerini başlat."""
-        self._sync_pool: ConnectionPool | None = None
-        self._async_pool: AsyncConnectionPool | None = None
-        self._async_initialized = False
-        self._sync_pool_lock = threading.Lock()
+        self._sync_pool         : ConnectionPool | None      = None
+        self._async_pool        : AsyncConnectionPool | None = None
+        self._async_initialized                              = False
+        self._sync_pool_lock                                 = threading.Lock()
         self._register_cleanup()
 
     def _get_pool_kwargs(self) -> dict:
@@ -109,7 +108,7 @@ class RedisPoolManager:
             self._async_initialized = True
             return self._async_pool
         except Exception:
-            self._async_pool = None
+            self._async_pool        = None
             self._async_initialized = True
             return None
 
@@ -141,7 +140,7 @@ class RedisPoolManager:
                     self._async_pool._in_use_connections.clear()
             except Exception:
                 pass
-            self._async_pool = None
+            self._async_pool        = None
             self._async_initialized = False
 
     async def acleanup(self) -> None:
@@ -158,7 +157,7 @@ class RedisPoolManager:
                 await self._async_pool.disconnect()
             except Exception:
                 pass
-            self._async_pool = None
+            self._async_pool        = None
             self._async_initialized = False
 
 

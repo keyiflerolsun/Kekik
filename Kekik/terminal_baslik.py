@@ -1,10 +1,9 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-import os, sys
+import os, sys, ctypes
 
 def terminal_baslik(mesaj:str):
     if os.name == "nt":
-        import ctypes
         ctypes.windll.kernel32.SetConsoleTitleW(mesaj)
         return
 

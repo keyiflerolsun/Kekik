@@ -1,3 +1,5 @@
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+
 # https://github.com/Skuzzy_xD/TelePyroBot
 
 def sure2saniye(zaman:str) -> int:

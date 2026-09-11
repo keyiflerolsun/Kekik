@@ -1,3 +1,5 @@
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+
 # https://github.com/django/django/blob/main/django/utils/text.py#L386-#L399
 
 import re, unicodedata

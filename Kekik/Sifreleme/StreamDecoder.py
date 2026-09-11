@@ -1,4 +1,4 @@
-# ! Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
+# Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
 import re, base64
 
@@ -36,11 +36,11 @@ class StreamDecoder:
         fn_start = re.search(r'function\s+\w+\s*\(\s*value_parts\s*\)\s*\{', self.script_text)
         if not fn_start:
             return ["reverse", "base64", "base64", "shift"]
-        
+
         # Nested braces'i sayarak fonksiyon gövdesini çıkar
-        start_pos = fn_start.end()
+        start_pos   = fn_start.end()
         brace_count = 1
-        pos = start_pos
+        pos         = start_pos
 
         while pos < len(self.script_text) and brace_count > 0:
             if self.script_text[pos] == '{':
@@ -50,26 +50,26 @@ class StreamDecoder:
             pos += 1
 
         fn_body = self.script_text[start_pos:pos-1]
-        
+
         # Statement'lara ayır (;'e göre)
         statements = fn_body.split(';')
         operations = []
-        
+
         for stmt in statements:
             stmt = stmt.strip()
             if not stmt:
                 continue
-            
+
             # Reverse işlemi: .split('').reverse().join('')
             if '.reverse()' in stmt and '.split(' in stmt and '.join(' in stmt:
                 operations.append("reverse")
                 continue
-            
+
             # Sadece reverse (split-join olmadan)
             if '.reverse()' in stmt and '.split(' not in stmt:
                 operations.append("reverse")
                 continue
-            
+
             # Base64 decode: atob(...)
             # Bir statement'ta birden fazla atob olabilir
             atob_count = stmt.count('atob(')
@@ -77,21 +77,21 @@ class StreamDecoder:
                 operations.append("base64")
             if atob_count > 0:
                 continue
-            
+
             # ROT13: replace ile charCodeAt(0)+13 veya -13
             if 'replace(' in stmt and ('charCodeAt(0)+13' in stmt or 'charCodeAt(0)-13' in stmt):
                 operations.append("rot13")
                 continue
-            
+
             # Shift unmix: for loop içinde charCode manipülasyonu
             if 'for(' in stmt and 'charCode' in stmt and '%' in stmt:
                 operations.append("shift")
                 continue
-        
+
         # Eğer for loop ayrı statement olarak algılanmadıysa, fn_body'de ara
         if 'shift' not in operations and 'for(' in fn_body and 'charCode' in fn_body:
             operations.append("shift")
-        
+
         return operations if operations else ["reverse", "base64", "base64", "shift"]
 
     def _extract_parts(self) -> list[str]:
@@ -105,7 +105,7 @@ class StreamDecoder:
 
         # Array çağrısını bul
         array_call_regex = re.compile(rf'{re.escape(fn_name)}\(\s*\[(.*?)\]\s*\)', re.DOTALL)
-        match_call = array_call_regex.search(self.script_text)
+        match_call       = array_call_regex.search(self.script_text)
         if not match_call:
             raise Exception(f"{fn_name}(...) array bulunamadı")
 
@@ -133,13 +133,13 @@ class StreamDecoder:
             padding = 4 - len(text) % 4
             if padding != 4:
                 text += '=' * padding
-            
+
             decoded_bytes = base64.b64decode(text)
             # JS atob davranışı: her byte'ı direkt karaktere çevir
             return ''.join(chr(b) for b in decoded_bytes)
         except Exception:
             return text
-    
+
     def _rot13_decode(self, text: str) -> str:
         """ROT13 decode (Caesar cipher with shift of 13)"""
         result = []
@@ -157,9 +157,9 @@ class StreamDecoder:
         output = []
         for i, ch in enumerate(text):
             char_code = ord(ch)
-            shifted = (char_code - (self.shift_const % (i + 5)) + 256) % 256
+            shifted   = (char_code - (self.shift_const % (i + 5)) + 256) % 256
             output.append(shifted)
-        
+
         try:
             return bytes(output).decode('utf-8', errors='ignore')
         except Exception:
@@ -188,10 +188,10 @@ class StreamDecoder:
     def extract_stream_url(cls, script_text: str) -> str:
         """
         Unpacked JS kodundan stream URL'sini çıkar.
-        
+
         Args:
             script_text: Unpacked JavaScript kodu
-            
+
         Returns:
             Decoded stream URL
         """

@@ -26,8 +26,8 @@ def proxy_ver(proxi_txt:str, tur=Literal["requests", "aiohttp", "selenium", "htt
             proxi_auth = BasicAuth(p_user, p_pass, "utf-8")
 
             requests_proxi = {
-                "http"   : f"http://{p_user}:{p_pass}@{p_ip}:{p_port}",
-                "https"  : f"http://{p_user}:{p_pass}@{p_ip}:{p_port}",
+                "http"  : f"http://{p_user}:{p_pass}@{p_ip}:{p_port}",
+                "https" : f"http://{p_user}:{p_pass}@{p_ip}:{p_port}",
                 # "socks5" : f"socks5://{p_user}:{p_pass}@{p_ip}:{p_port}",
             }
 
@@ -40,8 +40,8 @@ def proxy_ver(proxi_txt:str, tur=Literal["requests", "aiohttp", "selenium", "htt
             proxi_auth   = None
 
             requests_proxi = {
-                "http"   : f"http://{p_ip}:{p_port}",
-                "https"  : f"http://{p_ip}:{p_port}",
+                "http"  : f"http://{p_ip}:{p_port}",
+                "https" : f"http://{p_ip}:{p_port}",
                 # "socks5" : f"socks5://{p_ip}:{p_port}",
             }
 

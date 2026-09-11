@@ -2,18 +2,16 @@
 
 """Cache Decorator"""
 
-from __future__ import annotations
 import asyncio
-from functools import wraps
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from functools       import wraps
+from typing          import Any
 
-from .backends import MemoryCache, AsyncMemoryCache, HybridCache, AsyncHybridCache
+from .backends    import MemoryCache, AsyncMemoryCache, HybridCache, AsyncHybridCache
 from .serializers import make_cache_key
 
-F = TypeVar("F", bound=Callable[..., Any])
 
-
-def kekik_cache(
+def kekik_cache[F: Callable[..., Any]](
     ttl: int | None = None,
     unless: Callable[[Any], bool] | None = None,
     use_redis: bool = True,
@@ -23,10 +21,10 @@ def kekik_cache(
     Fonksiyon sonuçlarını cache'leyen decorator.
 
     Args:
-        ttl: Cache geçerlilik süresi (saniye). None = süresiz.
-        unless: True dönerse sonuç cache'lenmez.
-        use_redis: True = Redis + memory fallback, False = sadece memory.
-        max_size: Maksimum cache boyutu (LRU eviction).
+        ttl       : Cache geçerlilik süresi (saniye). None = süresiz.
+        unless    : True dönerse sonuç cache'lenmez.
+        use_redis : True                                   = Redis + memory fallback, False = sadece memory.
+        max_size  : Maksimum cache boyutu (LRU eviction).
 
     Örnekler:
         >>> @kekik_cache(ttl=300)
@@ -66,7 +64,7 @@ def _wrap_sync(
 ) -> Callable:
     """Senkron fonksiyonu cache wrapper'ı ile sar."""
 
-    cache = HybridCache(ttl, max_size) if use_redis else MemoryCache(ttl, max_size)
+    cache          = HybridCache(ttl, max_size) if use_redis else MemoryCache(ttl, max_size)
     func.__cache__ = cache
 
     @wraps(func)
@@ -100,7 +98,7 @@ def _wrap_async(
 ) -> Callable:
     """Asenkron fonksiyonu cache wrapper'ı ile sar."""
 
-    cache = AsyncHybridCache(ttl, max_size) if use_redis else AsyncMemoryCache(ttl, max_size)
+    cache          = AsyncHybridCache(ttl, max_size) if use_redis else AsyncMemoryCache(ttl, max_size)
     func.__cache__ = cache
 
     @wraps(func)

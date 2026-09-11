@@ -32,12 +32,12 @@ def satirlar_ekle(dosya_adi:str, eklenecek_metinler:list):
 
         dosya.seek(0)                       # Okuma imlecini dosyanın başına taşıyın
 
-        veri = dosya.read(100)              # Dosyanın boş olup olmadığını kontrol edin
+        veri       = dosya.read(100)  # Dosyanın boş olup olmadığını kontrol edin
         satir_atla = len(veri) > 0
-        for satir in eklenecek_metinler:    # Listedeki her elemanı gez
-            if satir_atla:                  # Dosya boş değilse, ilk satırın başına '\n' ekleyin
+        for satir in eklenecek_metinler:  # Listedeki her elemanı gez
+            if satir_atla:  # Dosya boş değilse, ilk satırın başına '\n' ekleyin
                 dosya.write("\n")
-            else:                           # diğer satırlar her zaman satır eklemeden önce '\n' ekler
+            else:  # diğer satırlar her zaman satır eklemeden önce '\n' ekler
                 satir_atla = True
 
             dosya.write(satir)              # Dosyanın sonuna eleman ekle
@@ -49,7 +49,7 @@ def satir_sil(dosya:str, metin:str) -> None:
     with open(dosya, "r+", encoding="utf-8") as dosya:
         satirlar = dosya.readlines()            # Satırları liste olarak alın
         dosya.seek(0)                           # Okuma imlecini dosyanın başına taşıyın
-        for satir in satirlar:                  # Satırları gezin
+        for satir in satirlar:  # Satırları gezin
             if metin not in satir and \
                 satir !='\n':                   # Eğer metin satır içinde geçmiyorsa ve \n Değilse
                 dosya.write(satir)              # Dosyaya ekleyin

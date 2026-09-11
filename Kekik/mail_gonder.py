@@ -4,7 +4,6 @@
 # from logging              import getLogger
 # getLogger("validate_email").setLevel("ERROR")
 
-from typing                 import Union
 from smtplib                import SMTP
 from email.mime.multipart   import MIMEMultipart
 from email.mime.text        import MIMEText
@@ -15,7 +14,7 @@ from datetime               import datetime
 
 async def mail_gonder(
     host:str,
-    port:Union[int, str],
+    port:int | str,
     kullanici:str,
     sifre:str,
     gonderen_adi:str,

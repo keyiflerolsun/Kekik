@@ -1,13 +1,12 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from typing       import Optional
 from requests     import head, get
 from urllib.parse import unquote
 from tqdm         import tqdm
 
 def indirilebilir_mi(url:str) -> bool:
-    istek  = head(url, allow_redirects=True)
-    header = istek.headers
+    istek        = head(url, allow_redirects=True)
+    header       = istek.headers
     content_type = header.get("content-type")
 
     if "text" in content_type.lower():
@@ -15,7 +14,7 @@ def indirilebilir_mi(url:str) -> bool:
 
     return "html" not in content_type.lower()
 
-def dosya_indir(url:str, dosya_adi:str=None) -> Optional[str]:
+def dosya_indir(url:str, dosya_adi:str=None) -> str | None:
     kontrol = indirilebilir_mi(url)
     if not kontrol:
         print(f"HATA!, İndirilebilir Değil! » {url}")
@@ -24,16 +23,16 @@ def dosya_indir(url:str, dosya_adi:str=None) -> Optional[str]:
     if not dosya_adi:
         dosya_adi = unquote(url.split("/")[-1])
     elif "." not in dosya_adi:
-        uzanti = unquote(url.split("/")[-1]).split(".")[-1]
+        uzanti    = unquote(url.split("/")[-1]).split(".")[-1]
         dosya_adi = f"{dosya_adi}.{uzanti}"
 
-    istek = get(url, stream=True)
+    istek        = get(url, stream=True)
     dosya_boyutu = int(istek.headers.get("content-length", 0))
 
     bar_format   = "{l_bar} [{rate_fmt}] | {bar}| [{n_fmt}B / {total_fmt}B] » [{elapsed} / {remaining}]"
     progress_bar = tqdm(desc=dosya_adi, total=dosya_boyutu, unit="B", unit_scale=True, bar_format=bar_format)
     with open(dosya_adi, "wb") as dosya:
-        for veri in istek.iter_content(1024): # 1KB
+        for veri in istek.iter_content(1024):  # 1KB
             progress_bar.update(len(veri))
             dosya.write(veri)
     progress_bar.close()

@@ -26,15 +26,60 @@ from rich import pretty, traceback
 pretty.install()
 traceback.install(show_locals=False)
 
-from rich.console import Console
+from rich.console     import Console
+from contextlib       import suppress
+from pathlib          import Path
+from logging.handlers import RotatingFileHandler
+from threading        import Lock
+import io, logging, os
 
-konsol = Console(
+class _KonsolDosyaLoglu(Console):
+    """
+    rich.Console — tek fark: log()/print() çağrıları terminale ek olarak
+    döngüsel (rotating) bir dosyaya da ANSI'siz düz metin + zaman damgasıyla
+    yazılır. Terminal kapansa da hata izi kaybolmasın diye.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._dosya_kilit = Lock()
+        self._duz_tampon  = io.StringIO()
+        self._duz_konsol  = Console(file=self._duz_tampon, no_color=True, width=200, highlight=False)
+
+        self._dosya_logu           = logging.getLogger("kekik.konsol")
+        self._dosya_logu.propagate = False
+        self._dosya_logu.setLevel(logging.INFO)
+        if not self._dosya_logu.handlers:
+            with suppress(Exception):
+                log_dizin = Path(os.environ.get("KEKIK_LOG_DIR", "Logs"))
+                log_dizin.mkdir(parents=True, exist_ok=True)
+                handler = RotatingFileHandler(log_dizin / "konsol.log", maxBytes=10_485_760, backupCount=5, encoding="utf-8")
+                handler.setFormatter(logging.Formatter("%(asctime)s | %(message)s"))
+                self._dosya_logu.addHandler(handler)
+
+    def _dosyaya_yaz(self, *args) -> None:
+        with suppress(Exception), self._dosya_kilit:
+            self._duz_tampon.seek(0)
+            self._duz_tampon.truncate(0)
+            self._duz_konsol.print(*args)
+            self._dosya_logu.info(self._duz_tampon.getvalue().rstrip("\n"))
+
+    def log(self, *args, **kwargs):
+        super().log(*args, **kwargs)
+        self._dosyaya_yaz(*args)
+
+    def print(self, *args, **kwargs):
+        super().print(*args, **kwargs)
+        self._dosyaya_yaz(*args)
+
+konsol = _KonsolDosyaLoglu(
     log_path = False,
     # _environ = {"COLUMNS": "112"}
 )
 
 #---------------------------------------------------#
-import os, platform
+import platform
 
 if os.name == "nt":
     kullanici_adi = os.getlogin()
@@ -59,11 +104,9 @@ def hata_salla(hata:Exception) -> None:
     konsol.print(f"[bold yellow2]{type(hata).__name__}[/] [bold magenta]||[/] [bold grey74]{hata}[/]", width=70, justify="center")
 
 #---------------------------------------------------#
-from contextlib import suppress
-from pathlib    import Path
-from shutil     import rmtree
-from traceback  import format_exc
-from asyncio    import get_event_loop
+from shutil    import rmtree
+from traceback import format_exc
+from asyncio   import get_event_loop
 
 def bellek_temizle():
     with suppress(Exception):

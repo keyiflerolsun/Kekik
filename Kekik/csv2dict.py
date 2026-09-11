@@ -1,9 +1,8 @@
 # Bu araç @keyiflerolsun tarafından | @KekikAkademi için yazılmıştır.
 
-from csv    import reader as csv_oku
-from typing import List, Dict
+from csv import reader as csv_oku
 
-def csv2dict(dosya_adi:str) -> List[Dict[str, str]]:
+def csv2dict(dosya_adi:str) -> list[dict[str, str]]:
     with open(dosya_adi, "r", encoding="utf-8") as dosya:
         csv_veri = csv_oku(dosya)
 
