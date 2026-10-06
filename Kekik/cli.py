@@ -32,7 +32,8 @@ from datetime         import datetime, timezone
 from pathlib          import Path
 from logging.handlers import RotatingFileHandler
 from queue            import Queue, Full
-from threading        import Thread
+from threading        import Thread, Lock, RLock
+from weakref          import ref
 import io, json, logging, os, re, sys
 
 # ---- Bilinen log şekilleri — kendi projelerimizin kalıpları -----------------
@@ -128,7 +129,35 @@ class _KonsolDosyaLoglu(Console):
                 json_handler.setFormatter(logging.Formatter("%(message)s"))
                 self._json_logu.addHandler(json_handler)
 
-        Thread(target=self._arka_plan_isci, daemon=True).start()
+        self._isci_kilidi = Lock()
+        self._log_iscisi  = None
+        if hasattr(os, "register_at_fork"):
+            # Kayıt geçici konsolları süreç ömrü boyunca bellekte tutmamalı.
+            console_ref = ref(self)
+
+            def fork_sonrasi():
+                console = console_ref()
+                if console is not None:
+                    console._fork_sonrasi()
+
+            os.register_at_fork(after_in_child=fork_sonrasi)
+        self._isci_baslat()
+
+    def _fork_sonrasi(self):
+        # Fork'ta thread'ler taşınmaz; miras alınan kuyruk/kilit çocukta kullanılamaz.
+        self._is_kuyrugu           = Queue(maxsize=self.KUYRUK_TAVANI)
+        self._isci_kilidi          = Lock()
+        self._lock                 = RLock()
+        self._record_buffer_lock   = RLock()
+        self._log_iscisi           = None
+        self._dusen_kayit_sayisi   = 0
+        self._dolu_uyarisi_verildi = False
+
+    def _isci_baslat(self):
+        with self._isci_kilidi:
+            if self._log_iscisi is None or not self._log_iscisi.is_alive():
+                self._log_iscisi = Thread(target=self._arka_plan_isci, daemon=True)
+                self._log_iscisi.start()
 
     def _arka_plan_isci(self) -> None:
         "Kuyruktan render+dosya işini tek başına yürütür — çağıran tarafı hiç bloklamaz."
@@ -149,8 +178,10 @@ class _KonsolDosyaLoglu(Console):
                 kayit = {"ts" : datetime.now(timezone.utc).isoformat(), "text" : metin}
                 kayit.update(_sekil_ayikla(metin))
                 self._json_logu.info(json.dumps(kayit, ensure_ascii=False))
+            self._is_kuyrugu.task_done()
 
     def _kuyruga_ekle(self, args) -> None:
+        self._isci_baslat()
         try:
             self._is_kuyrugu.put_nowait(args)
             self._dolu_uyarisi_verildi = False
