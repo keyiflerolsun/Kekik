@@ -2,7 +2,6 @@
 
 """Cache Decorator"""
 
-import asyncio
 from collections.abc import Callable
 from functools       import wraps
 from typing          import Any
@@ -10,6 +9,7 @@ from typing          import Any
 from .backends    import MemoryCache, AsyncMemoryCache, HybridCache, AsyncHybridCache
 from .serializers import make_cache_key
 
+import asyncio, inspect
 
 def kekik_cache[F: Callable[..., Any]](
     ttl: int | None = None,
@@ -47,7 +47,7 @@ def kekik_cache[F: Callable[..., Any]](
 
     def decorator(func: F) -> F:
 
-        if asyncio.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
             return _wrap_async(func, ttl, unless, use_redis, max_size)
 
         return _wrap_sync(func, ttl, unless, use_redis, max_size)
